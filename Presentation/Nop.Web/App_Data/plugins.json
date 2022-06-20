@@ -86,6 +86,66 @@
     {
       "SystemName": "ExternalAuth.Facebook",
       "Version": "1.73"
+    },
+    {
+      "SystemName": "SevenSpikes.Core",
+      "Version": "4.5"
+    },
+    {
+      "SystemName": "SevenSpikes.Nop.Plugins.AjaxCart",
+      "Version": "4.5"
+    },
+    {
+      "SystemName": "SevenSpikes.Nop.Plugins.AjaxFilters",
+      "Version": "4.5"
+    },
+    {
+      "SystemName": "SevenSpikes.Nop.Plugins.AnywhereSliders",
+      "Version": "4.5"
+    },
+    {
+      "SystemName": "SevenSpikes.Nop.Plugins.CloudZoom",
+      "Version": "4.5"
+    },
+    {
+      "SystemName": "SevenSpikes.Nop.Plugins.InstantSearch",
+      "Version": "4.5"
+    },
+    {
+      "SystemName": "SevenSpikes.Nop.Plugins.JCarousel",
+      "Version": "4.50"
+    },
+    {
+      "SystemName": "SevenSpikes.Nop.Plugins.MegaMenu",
+      "Version": "4.5"
+    },
+    {
+      "SystemName": "SevenSpikes.Nop.Plugins.NopQuickTabs",
+      "Version": "4.5"
+    },
+    {
+      "SystemName": "SevenSpikes.Nop.Plugins.ProductRibbons",
+      "Version": "4.5"
+    },
+    {
+      "SystemName": "SevenSpikes.Nop.Plugins.QuickView",
+      "Version": "4.5"
+    },
+    {
+      "SystemName": "SevenSpikes.Nop.Plugins.RichBlog",
+      "Version": "4.5"
+    },
+    {
+      "SystemName": "SevenSpikes.Nop.Plugins.SaleOfTheDay",
+      "Version": "4.5"
+    },
+    {
+      "SystemName": "SevenSpikes.Nop.Plugins.SmartProductCollections",
+      "Version": "4.5"
+    },
+    {
+      "SystemName": "SevenSpikes.Theme.Emporium",
+      "Version": "4.5"
     }
   ],
   "PluginNamesToUninstall": [],

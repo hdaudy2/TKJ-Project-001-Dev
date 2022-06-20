@@ -10,6 +10,9 @@
 *.user
 *.sln.docstates
 
+# node Modules
+node_modules
+
 # Build results
 
 .vs/

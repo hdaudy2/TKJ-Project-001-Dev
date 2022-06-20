@@ -1,0 +1,29 @@
+﻿@model IList<Nop.Web.Models.Catalog.ProductOverviewModel>
+
+@{ 
+    // If the produt box images carousel is enabled ("{0}themesettings.productboxesimagescarouselenabled") it is necessary to remove the 
+    // model for it to disable the carousel in the SPC
+    foreach (var item in Model)
+    {
+        if (item.CustomProperties.ContainsKey("ProductCarouselImages"))
+        {
+            item.CustomProperties.Remove("ProductCarouselImages");
+        }
+    }
+}
+
+@if (Model.Count > 0)
+{
+    foreach (var item in Model)
+    {
+        <div>
+            <div class="item-box">
+                @{ await Html.RenderPartialAsync("_ProductBox", item); }
+            </div>
+        </div>
+    }
+}
+else
+{
+    <span class="no-data">@T("SevenSpikes.SmartProductCollections.Public.NoProductsAvailable")</span>
+}

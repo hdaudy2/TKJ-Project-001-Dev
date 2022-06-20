@@ -1,0 +1,57 @@
+﻿@using Nop.Core
+@using Nop.Core.Domain.Seo
+@using Nop.Services.Configuration
+@inject ISettingService settingService
+@inject IStoreContext storeContext
+@inject SeoSettings seoSettings
+
+@{
+    Layout = "_ColumnsOne";
+
+    //title
+    if (!string.IsNullOrEmpty(seoSettings.HomepageTitle))
+    {
+        NopHtml.AddTitleParts(seoSettings.HomepageTitle);
+    }
+
+    //meta
+    if (!string.IsNullOrEmpty(seoSettings.HomepageDescription))
+    {
+        NopHtml.AddMetaDescriptionParts(seoSettings.HomepageDescription);
+    }
+
+    //page class
+    NopHtml.AppendPageCssClassParts("html-home-page");
+
+    var homePageProductsCarouselBreakPoints =
+        await settingService.GetSettingByKeyAsync("EmporiumThemeSettings.ResponsiveBreakpointsForHomePageProducts", "", (await storeContext.GetCurrentStoreAsync()).Id, true);
+    var enableHomePageCarousels = await settingService.GetSettingByKeyAsync("EmporiumThemeSettings.EnableHomepageCarousels", true, (await storeContext.GetCurrentStoreAsync()).Id, true);
+
+    var carouselsWrapperClass = enableHomePageCarousels ? "two-row-carousels small-products" : string.Empty;
+}
+
+<input id="home-page-carousel-breakpoints" type="hidden" value="@homePageProductsCarouselBreakPoints" />
+
+<div class="page home-page">
+    <div class="page-body">
+        @await Component.InvokeAsync("Widget", new { widgetZone = "emporium_home_page_info_boxes" })
+        @await Component.InvokeAsync("Widget", new { widgetZone = PublicWidgetZones.HomepageTop })
+        @await Component.InvokeAsync("TopicBlock", new { systemName = "HomepageText" })
+        @await Component.InvokeAsync("Widget", new { widgetZone = PublicWidgetZones.HomepageBeforeCategories })
+        @await Component.InvokeAsync("HomepageCategories")
+        @await Component.InvokeAsync("Widget", new { widgetZone = PublicWidgetZones.HomepageBeforeNews })
+        @await Component.InvokeAsync("HomepageNews")
+        @await Component.InvokeAsync("Widget", new { widgetZone = PublicWidgetZones.HomepageBeforePoll })
+        @await Component.InvokeAsync("HomepagePolls")
+        @await Component.InvokeAsync("Widget", new { widgetZone = PublicWidgetZones.HomepageBottom })
+        @await Component.InvokeAsync("Widget", new { widgetZone = "emporium_home_page_sale_of_the_day" })
+
+        @await Component.InvokeAsync("Widget", new { widgetZone = PublicWidgetZones.HomepageBeforeProducts })
+        @await Component.InvokeAsync("Widget", new { widgetZone = PublicWidgetZones.HomepageBeforeBestSellers })
+
+        <div class="@carouselsWrapperClass">
+            @await Component.InvokeAsync("HomepageProducts")
+            @await Component.InvokeAsync("HomepageBestSellers")
+        </div>
+    </div>
+</div>
