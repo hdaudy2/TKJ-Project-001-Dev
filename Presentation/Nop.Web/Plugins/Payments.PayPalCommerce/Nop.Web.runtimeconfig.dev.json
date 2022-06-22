@@ -1,8 +1,9 @@
 {
   "runtimeOptions": {
     "additionalProbingPaths": [
-      "C:\\Users\\89038\\.dotnet\\store\\|arch|\\|tfm|",
-      "C:\\Users\\89038\\.nuget\\packages"
+      "C:\\Users\\hasee\\.dotnet\\store\\|arch|\\|tfm|",
+      "C:\\Users\\hasee\\.nuget\\packages",
+      "C:\\Program Files\\Azure Data Studio\\NuGetPackages"
     ]
   }
 }
