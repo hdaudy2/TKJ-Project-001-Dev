@@ -130,6 +130,14 @@ namespace Nop.Web.Areas.Admin.Models.Catalog
 
         public string PrimaryStoreCurrencyCode { get; set; }
 
+        #region Multi-Tenant Plugin
+
+        //Store mapping
+        [NopResourceDisplayName("Admin.Catalog.Categories.Fields.LimitedToStores")]
+        public bool LimitedToStores { get; set; }
+
+        #endregion
+
         #endregion
     }
 

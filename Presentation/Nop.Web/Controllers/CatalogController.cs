@@ -391,10 +391,12 @@ namespace Nop.Web.Controllers
                 !await _storeMappingService.AuthorizeAsync(category);
             //Check whether the current user has a "Manage categories" permission (usually a store owner)
             //We should allows him (her) to use "Preview" functionality
-            var hasAdminAccess = await _permissionService.AuthorizeAsync(StandardPermissionProvider.AccessAdminPanel) && await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageCategories);
-            if (notAvailable && !hasAdminAccess)
+            
+            #region Multi-Tenant Plugin
+            //var hasAdminAccess = await _permissionService.AuthorizeAsync(StandardPermissionProvider.AccessAdminPanel) && await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageCategories);
+            if (notAvailable && !await _storeMappingService.IsAdminStore())
                 isAvailable = false;
-
+            #endregion
             return isAvailable;
         }
 

@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc.Rendering;
@@ -181,7 +182,9 @@ namespace Nop.Web.Areas.Admin.Factories
 
             //prepare available stores
             await _storeMappingSupportedModelFactory.PrepareModelStoresAsync(model, newsItem, excludeProperties);
-
+            #region Multi-Tenant Plugin
+            await PrepareStoresMappingModelAsync(model, newsItem, excludeProperties);
+            #endregion
             return model;
         }
 
@@ -252,9 +255,20 @@ namespace Nop.Web.Areas.Admin.Factories
                 toUtc: createdOnToValue,
                 commentText: searchModel.SearchText)).ToPagedList(searchModel);
 
+            #region Multi-Tenant Plugin
+
+            //stores
+            var _workContext = Nop.Core.Infrastructure.EngineContext.Current.Resolve<Nop.Core.IWorkContext>();
+            var allStores = await _storeService.GetAllStoresByEntityNameAsync((await _workContext.GetCurrentCustomerAsync()).Id, "Stores");
+            if (allStores.Count <= 0)
+            {
+                allStores = await _storeService.GetAllStoresAsync();
+            }
+
             //prepare store names (to avoid loading for each comment)
-            var storeNames = (await _storeService.GetAllStoresAsync())
-                .ToDictionary(store => store.Id, store => store.Name);
+            var storeNames = allStores.ToDictionary(store => store.Id, store => store.Name);
+
+            #endregion
 
             //prepare list model
             var model = await new NewsCommentListModel().PrepareToGridAsync(searchModel, comments, () =>
@@ -311,6 +325,34 @@ namespace Nop.Web.Areas.Admin.Factories
             return searchModel;
         }
 
+        #endregion
+
+        #region Multi-Tenant Plugin
+        public virtual async Task PrepareStoresMappingModelAsync(NewsItemModel model, NewsItem newsItem, bool excludeProperties)
+        {
+            if (model == null)
+                throw new ArgumentNullException(nameof(model));
+
+            var _storeMappingService = Nop.Core.Infrastructure.EngineContext.Current.Resolve<Nop.Services.Stores.IStoreMappingService>();
+            var _workContext = Nop.Core.Infrastructure.EngineContext.Current.Resolve<Core.IWorkContext>();
+            List<int> storeId = _storeMappingService.GetStoreIdByEntityId((await _workContext.GetCurrentCustomerAsync()).Id, "Stores");
+
+            if (!excludeProperties)
+            {
+                if (newsItem != null)
+                {
+                    model.SelectedStoreIds = (await _storeMappingService.GetStoresIdsWithAccessAsync(newsItem)).ToList();
+                }
+                else
+                {
+                    if (storeId.Count > 0) model.SelectedStoreIds = storeId;
+                }
+
+                if (storeId.Count <= 0)
+                    model.LimitedToStores = false;
+                else model.LimitedToStores = true;
+            }
+        }
         #endregion
     }
 }

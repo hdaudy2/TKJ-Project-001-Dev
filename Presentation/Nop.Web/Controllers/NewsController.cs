@@ -141,9 +141,13 @@ namespace Nop.Web.Controllers
                 !await _storeMappingService.AuthorizeAsync(newsItem);
             //Check whether the current user has a "Manage news" permission (usually a store owner)
             //We should allows him (her) to use "Preview" functionality
+            
+            #region Multi-Tenant Plugin
             var hasAdminAccess = await _permissionService.AuthorizeAsync(StandardPermissionProvider.AccessAdminPanel) && await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageNews);
-            if (notAvailable && !hasAdminAccess)
+            if (notAvailable && !await _storeMappingService.IsAdminStore())
                 return InvokeHttp404();
+
+            #endregion
 
             var model = new NewsItemModel();
             model = await _newsModelFactory.PrepareNewsItemModelAsync(model, newsItem, true);
@@ -155,7 +159,8 @@ namespace Nop.Web.Controllers
             return View(model);
         }
 
-        [HttpPost, ActionName("NewsItem")]        
+        [HttpPost, ActionName("NewsItem")]
+        [AutoValidateAntiforgeryToken]
         [FormValueRequired("add-comment")]
         [ValidateCaptcha]
         public virtual async Task<IActionResult> NewsCommentAdd(int newsItemId, NewsItemModel model, bool captchaValid)

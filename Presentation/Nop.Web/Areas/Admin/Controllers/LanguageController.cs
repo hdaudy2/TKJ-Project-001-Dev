@@ -78,7 +78,16 @@ namespace Nop.Web.Areas.Admin.Controllers
             await _languageService.UpdateLanguageAsync(language);
 
             var existingStoreMappings = await _storeMappingService.GetStoreMappingsAsync(language);
-            var allStores = await _storeService.GetAllStoresAsync();
+            #region Multi-Tenant Plugin
+
+            var _workContext = Nop.Core.Infrastructure.EngineContext.Current.Resolve<Nop.Core.IWorkContext>();
+            var allStores = await _storeService.GetAllStoresByEntityNameAsync((await _workContext.GetCurrentCustomerAsync()).Id, "Stores");
+            if (allStores.Count <= 0)
+            {
+                allStores = await _storeService.GetAllStoresAsync();
+            }
+
+            #endregion
             foreach (var store in allStores)
             {
                 if (model.SelectedStoreIds.Contains(store.Id))
@@ -183,6 +192,13 @@ namespace Nop.Web.Areas.Admin.Controllers
             var language = await _languageService.GetLanguageByIdAsync(id);
             if (language == null)
                 return RedirectToAction("List");
+
+            #region Multi-Tenant Plugin
+
+            if (!await _storeMappingService.AuthorizeAsync(language) && !await _storeMappingService.IsAdminStore())
+                return AccessDeniedView();
+
+            #endregion
 
             //prepare model
             var model = await _languageModelFactory.PrepareLanguageModelAsync(null, language);

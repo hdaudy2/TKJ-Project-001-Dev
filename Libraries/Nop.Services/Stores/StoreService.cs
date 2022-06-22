@@ -179,5 +179,34 @@ namespace Nop.Services.Stores
         }
 
         #endregion
+
+        #region Multi-Tenant Plugin
+
+        public virtual async Task<IList<Store>> GetStoreNameByIdAsync(int[] storeId)
+        {
+            var query = from s in _storeRepository.Table
+                        where storeId.Contains(s.Id)
+                        orderby s.DisplayOrder, s.Name
+                        select s;
+            var stores = await query.Distinct().ToListAsync();
+            return stores;
+        }
+        
+        public virtual async Task<IList<Store>> GetAllStoresByEntityNameAsync(int entityId, string entityName)
+        {
+            var _storeMappingRepository = Nop.Core.Infrastructure.EngineContext.Current.Resolve<IRepository<StoreMapping>>();
+
+            var query = from sm in _storeMappingRepository.Table
+                        join s in _storeRepository.Table on sm.StoreId equals s.Id
+                        where sm.EntityId == entityId &&
+                        sm.EntityName == entityName
+                        orderby s.DisplayOrder
+                        select s;
+            var stores = await query.Distinct().ToListAsync();
+            return stores;
+        }
+
+
+        #endregion
     }
 }

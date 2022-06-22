@@ -36,6 +36,12 @@ namespace Nop.Web.Areas.Admin.Factories
     /// </summary>
     public partial class BaseAdminModelFactory : IBaseAdminModelFactory
     {
+        #region Multi-Tenant Plugin
+        public static CacheKey CategoriesListByStoreIdKey => new CacheKey("Nop.pres.admin.categories.list.by.storeid-{0}-{1}", "Nop.pres.admin.categories.list.by.storeid");
+        public static CacheKey ManufacturerListByStoreIdKey => new CacheKey("Nop.pres.admin.manufacturer.list.by.storeid-{0}-{1}", "Nop.pres.admin.manufacturer.list.by.storeid");
+
+        #endregion
+
         #region Fields
 
         private readonly ICategoryService _categoryService;
@@ -153,10 +159,23 @@ namespace Nop.Web.Areas.Admin.Factories
         /// </returns>
         protected virtual async Task<List<SelectListItem>> GetCategoryListAsync(bool showHidden = true)
         {
-            var cacheKey = _staticCacheManager.PrepareKeyForDefaultCache(NopModelCacheDefaults.CategoriesListKey, showHidden);
+            #region Multi-Tenant Plugin
+            var storeId = 0;
+            var _workContext = Nop.Core.Infrastructure.EngineContext.Current.Resolve<Core.IWorkContext>();
+            var _storeMappingService = Nop.Core.Infrastructure.EngineContext.Current.Resolve<Nop.Services.Stores.IStoreMappingService>();
+            var currentStoreId = _storeMappingService.GetStoreIdByEntityId((await _workContext.GetCurrentCustomerAsync()).Id, "Stores").FirstOrDefault();
+            if (currentStoreId > 0)
+            {
+                storeId = currentStoreId;
+            }
+
+            var cacheKey = _staticCacheManager.PrepareKeyForDefaultCache(CategoriesListByStoreIdKey, storeId, showHidden);
+            #endregion
             var listItems = await _staticCacheManager.GetAsync(cacheKey, async () =>
             {
-                var categories = await _categoryService.GetAllCategoriesAsync(showHidden: showHidden);
+                #region Multi-Tenant Plugin
+                var categories = await _categoryService.GetAllCategoriesAsync(storeId: storeId, showHidden: showHidden);
+                #endregion
                 return await categories.SelectAwait(async c => new SelectListItem
                 {
                     Text = await _categoryService.GetFormattedBreadCrumbAsync(c, categories),
@@ -188,10 +207,24 @@ namespace Nop.Web.Areas.Admin.Factories
         /// </returns>
         protected virtual async Task<List<SelectListItem>> GetManufacturerListAsync(bool showHidden = true)
         {
-            var cacheKey = _staticCacheManager.PrepareKeyForDefaultCache(NopModelCacheDefaults.ManufacturersListKey, showHidden);
+            #region Multi-Tenant Plugin
+            var storeId = 0;
+            var _workContext = Nop.Core.Infrastructure.EngineContext.Current.Resolve<Core.IWorkContext>();
+            var _storeMappingService = Nop.Core.Infrastructure.EngineContext.Current.Resolve<Nop.Services.Stores.IStoreMappingService>();
+            var currentStoreId = _storeMappingService.GetStoreIdByEntityId((await _workContext.GetCurrentCustomerAsync()).Id, "Stores").FirstOrDefault();
+            if (currentStoreId > 0)
+            {
+                storeId = currentStoreId;
+            }
+
+            var cacheKey = _staticCacheManager.PrepareKeyForDefaultCache(ManufacturerListByStoreIdKey, storeId, showHidden);
+            #endregion
+
             var listItems = await _staticCacheManager.GetAsync(cacheKey, async () =>
             {
-                var manufacturers = await _manufacturerService.GetAllManufacturersAsync(showHidden: showHidden);
+                #region Multi-Tenant Plugin
+                var manufacturers = await _manufacturerService.GetAllManufacturersAsync(storeId: storeId, showHidden: showHidden);
+                #endregion
                 return manufacturers.Select(m => new SelectListItem
                 {
                     Text = m.Name,
@@ -436,12 +469,22 @@ namespace Nop.Web.Areas.Admin.Factories
                 throw new ArgumentNullException(nameof(items));
 
             //prepare available stores
-            var availableStores = await _storeService.GetAllStoresAsync();
+            #region Extensions by QuanNH
+
+            var _workContext = Nop.Core.Infrastructure.EngineContext.Current.Resolve<Nop.Core.IWorkContext>();
+            var availableStores = await _storeService.GetAllStoresByEntityNameAsync((await _workContext.GetCurrentCustomerAsync()).Id, "Stores");
+            if (availableStores.Count <= 0)
+            {
+                availableStores = await _storeService.GetAllStoresAsync();
+                await PrepareDefaultItemAsync(items, withSpecialDefaultItem, defaultItemText);
+            }
+
             foreach (var store in availableStores)
             {
                 items.Add(new SelectListItem { Value = store.Id.ToString(), Text = store.Name });
             }
 
+            #endregion
             //insert special item for the default value
             await PrepareDefaultItemAsync(items, withSpecialDefaultItem, defaultItemText);
         }

@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc.Rendering;
@@ -88,9 +89,19 @@ namespace Nop.Web.Areas.Admin.Factories
             var selectedValuesIds = await _checkoutAttributeParser
                 .ParseCheckoutAttributeValues(checkoutAttribute.ConditionAttributeXml).SelectMany(ta => ta.values.Select(v => v.Id)).ToListAsync();
 
+            #region Multi-Tenant Plugin
+            var storeId = 0;
+            var _workContext = Nop.Core.Infrastructure.EngineContext.Current.Resolve<Core.IWorkContext>();
+            var _storeMappingService = Nop.Core.Infrastructure.EngineContext.Current.Resolve<Nop.Services.Stores.IStoreMappingService>();
+            var currentStoreId = _storeMappingService.GetStoreIdByEntityId((await _workContext.GetCurrentCustomerAsync()).Id, "Stores").FirstOrDefault();
+            if (currentStoreId > 0)
+            {
+                storeId = currentStoreId;
+            }
             //get available condition checkout attributes (ignore this attribute and non-combinable attributes)
-            var availableConditionAttributes = (await _checkoutAttributeService.GetAllCheckoutAttributesAsync())
+            var availableConditionAttributes = (await _checkoutAttributeService.GetAllCheckoutAttributesAsync(storeId: storeId))
                 .Where(attribute => attribute.Id != checkoutAttribute.Id && attribute.CanBeUsedAsCondition());
+            #endregion
 
             model.ConditionAttributes = await availableConditionAttributes.SelectAwait(async attribute => new AttributeConditionModel
             {
@@ -131,6 +142,34 @@ namespace Nop.Web.Areas.Admin.Factories
 
         #endregion
 
+        #region Multi-Tenant Plugin
+        public virtual async Task PrepareStoresMappingModelAsync(CheckoutAttributeModel model, CheckoutAttribute checkoutAttribute, bool excludeProperties)
+        {
+            if (model == null)
+                throw new ArgumentNullException(nameof(model));
+
+            var _storeMappingService = Nop.Core.Infrastructure.EngineContext.Current.Resolve<Nop.Services.Stores.IStoreMappingService>();
+            var _workContext = Nop.Core.Infrastructure.EngineContext.Current.Resolve<Core.IWorkContext>();
+            List<int> storeId = _storeMappingService.GetStoreIdByEntityId((await _workContext.GetCurrentCustomerAsync()).Id, "Stores");
+
+            if (!excludeProperties)
+            {
+                if (checkoutAttribute != null)
+                {
+                    model.SelectedStoreIds = (await _storeMappingService.GetStoresIdsWithAccessAsync(checkoutAttribute)).ToList();
+                }
+                else
+                {
+                    if (storeId.Count > 0) model.SelectedStoreIds = storeId;
+                }
+
+                if (storeId.Count <= 0)
+                    model.LimitedToStores = false;
+                else model.LimitedToStores = true;
+            }
+        }
+        #endregion
+
         #region Methods
 
         /// <summary>
@@ -165,8 +204,18 @@ namespace Nop.Web.Areas.Admin.Factories
             if (searchModel == null)
                 throw new ArgumentNullException(nameof(searchModel));
 
+            #region Multi-Tenant Plugin
+            var storeId = 0;
+            var _workContext = Nop.Core.Infrastructure.EngineContext.Current.Resolve<Core.IWorkContext>();
+            var _storeMappingService = Nop.Core.Infrastructure.EngineContext.Current.Resolve<Nop.Services.Stores.IStoreMappingService>();
+            var currentStoreId = _storeMappingService.GetStoreIdByEntityId((await _workContext.GetCurrentCustomerAsync()).Id, "Stores").FirstOrDefault();
+            if (currentStoreId > 0)
+            {
+                storeId = currentStoreId;
+            }
             //get checkout attributes
-            var checkoutAttributes = (await _checkoutAttributeService.GetAllCheckoutAttributesAsync()).ToPagedList(searchModel);
+            var checkoutAttributes = (await _checkoutAttributeService.GetAllCheckoutAttributesAsync(storeId: storeId)).ToPagedList(searchModel);
+            #endregion
 
             //prepare list model
             var model = await new CheckoutAttributeListModel().PrepareToGridAsync(searchModel, checkoutAttributes, () =>
@@ -237,7 +286,9 @@ namespace Nop.Web.Areas.Admin.Factories
 
             //prepare model stores
             await _storeMappingSupportedModelFactory.PrepareModelStoresAsync(model, checkoutAttribute, excludeProperties);
-
+            #region Multi-Tenant Plugin
+            await PrepareStoresMappingModelAsync(model, checkoutAttribute, excludeProperties);
+            #endregion
             return model;
         }
 

@@ -527,7 +527,7 @@
             </div>
         </div>
     </div>
-    <div class="form-group row @(Model.ProductEditorSettingsModel.Stores ? null : "advanced-setting")">
+    <div @(Model.LimitedToStores == true ? "style=display:none;" : "") class="form-group row @(Model.ProductEditorSettingsModel.Stores ? null : "advanced-setting")">
         <div class="col-md-3">
             <nop-label asp-for="SelectedStoreIds" />
         </div>

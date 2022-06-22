@@ -62,7 +62,16 @@ namespace Nop.Web.Areas.Admin.Controllers
 
             //manage store mappings
             var existingStoreMappings = await _storeMappingService.GetStoreMappingsAsync(poll);
-            foreach (var store in await _storeService.GetAllStoresAsync())
+            #region Multi-Tenant Plugin
+            var _workContext = Nop.Core.Infrastructure.EngineContext.Current.Resolve<Nop.Core.IWorkContext>();
+            var allStores = await _storeService.GetAllStoresByEntityNameAsync((await _workContext.GetCurrentCustomerAsync()).Id, "Stores");
+            if (allStores.Count <= 0)
+            {
+                allStores = await _storeService.GetAllStoresAsync();
+            }
+
+            #endregion
+            foreach (var store in allStores)
             {
                 var existingStoreMapping = existingStoreMappings.FirstOrDefault(storeMapping => storeMapping.StoreId == store.Id);
 
@@ -159,6 +168,13 @@ namespace Nop.Web.Areas.Admin.Controllers
             var poll = await _pollService.GetPollByIdAsync(id);
             if (poll == null)
                 return RedirectToAction("List");
+
+            #region Multi-Tenant Plugin
+
+            if (!await _storeMappingService.AuthorizeAsync(poll) && !await _storeMappingService.IsAdminStore())
+                return AccessDeniedView();
+
+            #endregion
 
             //prepare model
             var model = await _pollModelFactory.PreparePollModelAsync(null, poll);

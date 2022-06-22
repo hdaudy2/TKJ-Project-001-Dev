@@ -181,6 +181,17 @@ namespace Nop.Services.Orders
         public virtual async Task<IList<OrderByCountryReportLine>> GetCountryReportAsync(int storeId, OrderStatus? os,
             PaymentStatus? ps, ShippingStatus? ss, DateTime? startTimeUtc, DateTime? endTimeUtc)
         {
+            #region Multi-Tenant Plugin
+            var _storeMappingService = Nop.Core.Infrastructure.EngineContext.Current.Resolve<Nop.Services.Stores.IStoreMappingService>();
+
+            //Current Store Admin
+            if (await _storeMappingService.CurrentStore() > 0)
+            {
+                storeId = await _storeMappingService.CurrentStore();
+            }
+
+            #endregion
+
             int? orderStatusId = null;
             if (os.HasValue)
                 orderStatusId = (int)os.Value;
@@ -260,6 +271,16 @@ namespace Nop.Services.Orders
             DateTime? startTimeUtc = null, DateTime? endTimeUtc = null,
             string billingPhone = null, string billingEmail = null, string billingLastName = "", string orderNotes = null)
         {
+            #region Multi-Tenant Plugin
+
+            var _storeMappingService = Nop.Core.Infrastructure.EngineContext.Current.Resolve<Nop.Services.Stores.IStoreMappingService>();
+            //Current Store Admin
+            if (await _storeMappingService.CurrentStore() > 0)
+            {
+                storeId = await _storeMappingService.CurrentStore();
+            }
+
+            #endregion
             var query = _orderRepository.Table;
 
             query = query.Where(o => !o.Deleted);
@@ -385,6 +406,15 @@ namespace Nop.Services.Orders
             var nowDt = await _dateTimeHelper.ConvertToUserTimeAsync(DateTime.Now);
             var timeZone = await _dateTimeHelper.GetCurrentTimeZoneAsync();
 
+            #region Multi-Tenant Plugin
+            var _storeMappingService = Nop.Core.Infrastructure.EngineContext.Current.Resolve<Nop.Services.Stores.IStoreMappingService>();
+            //Current Store Admin
+            if (await _storeMappingService.CurrentStore() > 0)
+            {
+                storeId = await _storeMappingService.CurrentStore();
+            }
+
+            #endregion
             //today
             var t1 = new DateTime(nowDt.Year, nowDt.Month, nowDt.Day);
             DateTime? startTime1 = _dateTimeHelper.ConvertToUtcTime(t1, timeZone);
@@ -683,6 +713,16 @@ namespace Nop.Services.Orders
             bool showHidden = false)
         {
 
+            #region Multi-Tenant Plugin
+
+            var _storeMappingService = Nop.Core.Infrastructure.EngineContext.Current.Resolve<Nop.Services.Stores.IStoreMappingService>();
+            //Current Store Admin
+            if (await _storeMappingService.CurrentStore() > 0)
+            {
+                storeId = await _storeMappingService.CurrentStore();
+            }
+
+            #endregion
             var bestSellers = SearchOrderItems(categoryId, manufacturerId, storeId, vendorId, createdFromUtc, createdToUtc, os, ps, ss, billingCountryId, showHidden);
 
             var bsReport =
@@ -760,6 +800,17 @@ namespace Nop.Services.Orders
         {
             if (productId == 0)
                 throw new ArgumentException("Product ID is not specified");
+            
+            #region Multi-Tenant Plugin
+
+            var _storeMappingService = Nop.Core.Infrastructure.EngineContext.Current.Resolve<Nop.Services.Stores.IStoreMappingService>();
+            //Current Store Admin
+            if (await _storeMappingService.CurrentStore() > 0)
+            {
+                storeId = await _storeMappingService.CurrentStore();
+            }
+
+            #endregion
 
             //this inner query should retrieve all orders that contains a specified product ID
             var query1 = from orderItem in _orderItemRepository.Table
@@ -820,6 +871,18 @@ namespace Nop.Services.Orders
             DateTime? createdFromUtc = null, DateTime? createdToUtc = null,
             int pageIndex = 0, int pageSize = int.MaxValue, bool showHidden = false)
         {
+
+            #region Multi-Tenant Plugin
+
+            var _storeMappingService = Nop.Core.Infrastructure.EngineContext.Current.Resolve<Nop.Services.Stores.IStoreMappingService>();
+            //Current Store Admin
+            if (await _storeMappingService.CurrentStore() > 0)
+            {
+                storeId = await _storeMappingService.CurrentStore();
+            }
+
+            #endregion
+
             var simpleProductTypeId = (int)ProductType.SimpleProduct;
 
             var availableProductsQuery =
@@ -827,6 +890,9 @@ namespace Nop.Services.Orders
                 join o in _orderRepository.Table on oi.OrderId equals o.Id
                 where (!createdFromUtc.HasValue || createdFromUtc.Value <= o.CreatedOnUtc) &&
                       (!createdToUtc.HasValue || createdToUtc.Value >= o.CreatedOnUtc) &&
+                      #region Multi-Tenant Plugin
+                     (o.StoreId == storeId) &&
+                      #endregion
                       !o.Deleted
                 select new { ProductId = oi.ProductId };
 
@@ -865,7 +931,9 @@ namespace Nop.Services.Orders
             //apply store mapping constraints
             query = await _storeMappingService.ApplyStoreMapping(query, storeId);
 
-            query = query.OrderBy(p => p.Name);
+            #region Multi-Tenant Plugin
+            query = query.Distinct().OrderBy(p => p.Name);
+            #endregion
 
             var products = await query.ToPagedListAsync(pageIndex, pageSize);
             return products;
@@ -900,6 +968,16 @@ namespace Nop.Services.Orders
             DateTime? startTimeUtc = null, DateTime? endTimeUtc = null,
             string billingPhone = null, string billingEmail = null, string billingLastName = "", string orderNotes = null)
         {
+            #region Multi-Tenant Plugin
+            var _storeMappingService = Nop.Core.Infrastructure.EngineContext.Current.Resolve<Nop.Services.Stores.IStoreMappingService>();
+            //Current Store Admin
+            if (await _storeMappingService.CurrentStore() > 0)
+            {
+                storeId = await _storeMappingService.CurrentStore();
+            }
+
+            #endregion
+
             var dontSearchPhone = string.IsNullOrEmpty(billingPhone);
             var dontSearchEmail = string.IsNullOrEmpty(billingEmail);
             var dontSearchLastName = string.IsNullOrEmpty(billingLastName);

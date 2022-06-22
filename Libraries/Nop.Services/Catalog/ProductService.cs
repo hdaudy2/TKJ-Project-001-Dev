@@ -11,6 +11,7 @@ using Nop.Core.Domain.Discounts;
 using Nop.Core.Domain.Localization;
 using Nop.Core.Domain.Orders;
 using Nop.Core.Domain.Shipping;
+using Nop.Core.Domain.Stores; // Multi-Tenant Plugin
 using Nop.Core.Infrastructure;
 using Nop.Data;
 using Nop.Services.Customers;
@@ -64,6 +65,10 @@ namespace Nop.Services.Catalog
         protected readonly IWorkContext _workContext;
         protected readonly LocalizationSettings _localizationSettings;
 
+        #region Multi-Tenant Plugin
+        protected readonly IRepository<StoreMapping> _storeMappingRepository;
+        #endregion
+
         #endregion
 
         #region Ctor
@@ -101,7 +106,9 @@ namespace Nop.Services.Catalog
             IStoreService storeService,
             IStoreMappingService storeMappingService,
             IWorkContext workContext,
-            LocalizationSettings localizationSettings)
+            LocalizationSettings localizationSettings,
+            IRepository<StoreMapping> storeMappingRepository
+            )
         {
             _catalogSettings = catalogSettings;
             _commonSettings = commonSettings;
@@ -137,6 +144,7 @@ namespace Nop.Services.Catalog
             _storeService = storeService;
             _workContext = workContext;
             _localizationSettings = localizationSettings;
+            _storeMappingRepository = storeMappingRepository; //Multi-Tenant Plugin
         }
 
         #endregion
@@ -1048,6 +1056,14 @@ namespace Nop.Services.Catalog
         public virtual async Task<IList<Product>> GetAssociatedProductsAsync(int parentGroupedProductId,
             int storeId = 0, int vendorId = 0, bool showHidden = false)
         {
+            #region Multi-Tenant Plugin
+            var _storeMappingService = Nop.Core.Infrastructure.EngineContext.Current.Resolve<Nop.Services.Stores.IStoreMappingService>();
+            //Current Store Admin
+            if (await _storeMappingService.CurrentStore() > 0)
+            {
+                storeId = await _storeMappingService.CurrentStore();
+            }
+            #endregion
             var query = _productRepository.Table;
             query = query.Where(x => x.ParentGroupedProductId == parentGroupedProductId);
             if (!showHidden)
@@ -1135,6 +1151,20 @@ namespace Nop.Services.Catalog
         {
             var query = _productRepository.Table;
 
+            #region Multi-Tenant Plugin
+            //Store mapping
+            List<int> storeId = _storeMappingService.GetStoreIdByEntityId((await _workContext.GetCurrentCustomerAsync()).Id, "Stores");
+            if (storeId != null)
+            {
+                query = from p in query
+                        join sm in _storeMappingRepository.Table
+                        on new { c1 = p.Id, c2 = "Product" } equals new { c1 = sm.EntityId, c2 = sm.EntityName } into p_sm
+                        from sm in p_sm.DefaultIfEmpty()
+                        where storeId.Contains(sm.StoreId)
+                        select p;
+            }
+            #endregion
+
             //filter by products with tracking inventory
             query = query.Where(product => product.ManageInventoryMethodId == (int)ManageInventoryMethod.ManageStock);
 
@@ -1177,8 +1207,23 @@ namespace Nop.Services.Catalog
         public virtual async Task<IPagedList<ProductAttributeCombination>> GetLowStockProductCombinationsAsync(int? vendorId = null, bool? loadPublishedOnly = true,
             int pageIndex = 0, int pageSize = int.MaxValue, bool getOnlyTotalCount = false)
         {
+            #region Multi-Tenant Plugin
+            //Store mapping
+            List<int> storeId = _storeMappingService.GetStoreIdByEntityId((await _workContext.GetCurrentCustomerAsync()).Id, "Stores");
+            var products = _productRepository.Table;
+
+            if (storeId != null)
+            {
+                products = from p in products
+                           join sm in _storeMappingRepository.Table
+                        on new { c1 = p.Id, c2 = "Product" } equals new { c1 = sm.EntityId, c2 = sm.EntityName } into p_sm
+                           from sm in p_sm.DefaultIfEmpty()
+                           where storeId.Contains(sm.StoreId)
+                           select p;
+            }
+
             var combinations = from pac in _productAttributeCombinationRepository.Table
-                               join p in _productRepository.Table on pac.ProductId equals p.Id
+                               join p in products on pac.ProductId equals p.Id
                                where
                                    //filter by combinations with stock quantity less than the minimum
                                    pac.StockQuantity <= pac.MinStockQuantity &&
@@ -1195,6 +1240,7 @@ namespace Nop.Services.Catalog
                                orderby pac.ProductId, pac.Id
                                select pac;
 
+            #endregion
             return await combinations.ToPagedListAsync(pageIndex, pageSize, getOnlyTotalCount);
         }
 
@@ -1577,9 +1623,18 @@ namespace Nop.Services.Catalog
         public virtual async Task UpdateProductStoreMappingsAsync(Product product, IList<int> limitedToStoresIds)
         {
             product.LimitedToStores = limitedToStoresIds.Any();
-
             var existingStoreMappings = await _storeMappingService.GetStoreMappingsAsync(product);
-            var allStores = await _storeService.GetAllStoresAsync();
+            
+            #region Multi-Tenant Plugin
+            
+            var _workContext = Nop.Core.Infrastructure.EngineContext.Current.Resolve<Nop.Core.IWorkContext>();
+            var allStores = await _storeService.GetAllStoresByEntityNameAsync((await _workContext.GetCurrentCustomerAsync()).Id, "Stores");
+            if (allStores.Count <= 0)
+            {
+                allStores = await _storeService.GetAllStoresAsync();
+            }
+            #endregion
+            
             foreach (var store in allStores)
             {
                 if (limitedToStoresIds.Contains(store.Id))
@@ -2305,7 +2360,7 @@ namespace Nop.Services.Catalog
                     query = query.Where(pr => toUtc.Value >= pr.CreatedOnUtc);
                 if (!string.IsNullOrEmpty(message))
                     query = query.Where(pr => pr.Title.Contains(message) || pr.ReviewText.Contains(message));
-                if (storeId > 0)
+                if (storeId > 0 && (showHidden || _catalogSettings.ShowProductReviewsPerStore))
                     query = query.Where(pr => pr.StoreId == storeId);
                 if (productId > 0)
                     query = query.Where(pr => pr.ProductId == productId);

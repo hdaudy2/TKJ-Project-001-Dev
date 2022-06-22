@@ -61,6 +61,14 @@ namespace Nop.Web.Areas.Admin.Models.Localization
         // search
         public LocaleResourceSearchModel LocaleResourceSearchModel { get; set; }
 
+        #region Multi-Tenant Plugin
+
+        //Store mapping
+        [NopResourceDisplayName("Admin.Catalog.Products.Fields.LimitedToStores")]
+        public bool LimitedToStores { get; set; }
+
+        #endregion
+
         #endregion
     }
 }

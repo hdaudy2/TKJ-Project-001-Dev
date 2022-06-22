@@ -66,5 +66,10 @@ namespace Nop.Services.Stores
         /// The task result contains the list of names and/or IDs not existing stores
         /// </returns>
         Task<string[]> GetNotExistingStoresAsync(string[] storeIdsNames);
+
+        #region Multi-Tenant Plugin
+        Task<IList<Store>> GetStoreNameByIdAsync(int[] storeId);
+        Task<IList<Store>> GetAllStoresByEntityNameAsync(int entityId, string entityName);
+        #endregion
     }
 }

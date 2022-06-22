@@ -124,12 +124,25 @@ namespace Nop.Web.Areas.Admin.Factories
             var endDateValue = searchModel.CreatedOnTo == null ? null
                 : (DateTime?)_dateTimeHelper.ConvertToUtcTime(searchModel.CreatedOnTo.Value, await _dateTimeHelper.GetCurrentTimeZoneAsync()).AddDays(1);
 
+            #region Multi-Tenant Plugin
+            int? customerId = null;
+            var _workContext = Nop.Core.Infrastructure.EngineContext.Current.Resolve<Nop.Core.IWorkContext>();
+            var _storeMappingService = Nop.Core.Infrastructure.EngineContext.Current.Resolve<Nop.Services.Stores.IStoreMappingService>();
+            var currentStoreId = _storeMappingService.GetStoreIdByEntityId((await _workContext.GetCurrentCustomerAsync()).Id, "Stores").FirstOrDefault();
+            if (currentStoreId > 0)
+            {
+                customerId = (await _workContext.GetCurrentCustomerAsync()).Id;
+            }
+
             //get log
             var activityLog = await _customerActivityService.GetAllActivitiesAsync(createdOnFrom: startDateValue,
                 createdOnTo: endDateValue,
                 activityLogTypeId: searchModel.ActivityLogTypeId,
+                customerId: customerId,
                 ipAddress: searchModel.IpAddress,
                 pageIndex: searchModel.Page - 1, pageSize: searchModel.PageSize);
+
+            #endregion
 
             if (activityLog is null)
                 return new ActivityLogListModel();

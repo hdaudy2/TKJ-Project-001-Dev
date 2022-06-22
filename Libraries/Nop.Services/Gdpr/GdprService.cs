@@ -313,7 +313,17 @@ namespace Nop.Services.Gdpr
                 await _forumService.DeletePrivateMessageAsync(pm);
 
             //newsletter
-            var allStores = await _storeService.GetAllStoresAsync();
+            #region Multi-Tenant Plugin
+
+            var _workContext = Nop.Core.Infrastructure.EngineContext.Current.Resolve<Nop.Core.IWorkContext>();
+            var allStores = await _storeService.GetAllStoresByEntityNameAsync((await _workContext.GetCurrentCustomerAsync()).Id, "Stores");
+            if (allStores.Count <= 0)
+            {
+                allStores = await _storeService.GetAllStoresAsync();
+            }
+
+            #endregion
+
             foreach (var store in allStores)
             {
                 var newsletter = await _newsLetterSubscriptionService.GetNewsLetterSubscriptionByEmailAndStoreIdAsync(customer.Email, store.Id);

@@ -408,5 +408,11 @@ namespace Nop.Services.Orders
         Task<IList<RecurringPaymentHistory>> GetRecurringPaymentHistoryAsync(RecurringPayment recurringPayment);
 
         #endregion
+
+        #region Multi-Tenant Plugin
+
+        Task<OrderItem> GetOrderItemByOrderIdAsync(int OrderId);
+
+        #endregion
     }
 }

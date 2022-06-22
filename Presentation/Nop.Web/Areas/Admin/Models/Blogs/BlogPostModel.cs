@@ -84,7 +84,13 @@ namespace Nop.Web.Areas.Admin.Models.Blogs
         [NopResourceDisplayName("Admin.ContentManagement.Blog.BlogPosts.Fields.LimitedToStores")]
         public IList<int> SelectedStoreIds { get; set; }
         public IList<SelectListItem> AvailableStores { get; set; }
+        #region Multi-Tenant Plugin
 
+        //Store mapping
+        [NopResourceDisplayName("Admin.ContentManagement.Blog.BlogPosts.Fields.LimitedToStores")]
+        public bool LimitedToStores { get; set; }
+
+        #endregion
         #endregion
     }
 }

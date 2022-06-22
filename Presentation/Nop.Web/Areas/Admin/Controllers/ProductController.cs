@@ -901,6 +901,13 @@ namespace Nop.Web.Areas.Admin.Controllers
             var product = await _productService.GetProductByIdAsync(id);
             if (product == null || product.Deleted)
                 return RedirectToAction("List");
+            
+            #region Multi-Tenant Plugin
+            var _storeMappingService = Nop.Core.Infrastructure.EngineContext.Current.Resolve<Nop.Services.Stores.IStoreMappingService>();
+            if (!await _storeMappingService.AuthorizeAsync(product) && !await _storeMappingService.IsAdminStore())
+                return AccessDeniedView();
+
+            #endregion
 
             //a vendor should have access only to his products
             var currentVendor = await _workContext.GetCurrentVendorAsync();

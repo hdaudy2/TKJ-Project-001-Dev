@@ -175,7 +175,16 @@ namespace Nop.Web.Areas.Admin.Controllers
             await _categoryService.UpdateCategoryAsync(category);
 
             var existingStoreMappings = await _storeMappingService.GetStoreMappingsAsync(category);
-            var allStores = await _storeService.GetAllStoresAsync();
+            #region Multi-Tenant Plugin
+
+            var _workContext = Nop.Core.Infrastructure.EngineContext.Current.Resolve<Nop.Core.IWorkContext>();
+            var allStores = await _storeService.GetAllStoresByEntityNameAsync((await _workContext.GetCurrentCustomerAsync()).Id, "Stores");
+            if (allStores.Count <= 0)
+            {
+                allStores = await _storeService.GetAllStoresAsync();
+            }
+
+            #endregion
             foreach (var store in allStores)
             {
                 if (model.SelectedStoreIds.Contains(store.Id))
@@ -308,6 +317,13 @@ namespace Nop.Web.Areas.Admin.Controllers
             var category = await _categoryService.GetCategoryByIdAsync(id);
             if (category == null || category.Deleted)
                 return RedirectToAction("List");
+
+            #region Multi-Tenant Plugin
+
+            if (!await _storeMappingService.AuthorizeAsync(category) && !await _storeMappingService.IsAdminStore())
+                return AccessDeniedView();
+
+            #endregion
 
             //prepare model
             var model = await _categoryModelFactory.PrepareCategoryModelAsync(null, category);

@@ -63,7 +63,18 @@ namespace Nop.Services.Common
         /// </returns>
         public virtual async Task<IPagedList<SearchTermReportLine>> GetStatsAsync(int pageIndex = 0, int pageSize = int.MaxValue)
         {
-            var query = (from st in _searchTermRepository.Table
+            #region Multi-Tenant Plugin
+            var queryStore = _searchTermRepository.Table;
+            var _storeMappingService = Nop.Core.Infrastructure.EngineContext.Current.Resolve<Nop.Services.Stores.IStoreMappingService>();
+
+            //Current Store Admin
+            if (await _storeMappingService.CurrentStore() > 0)
+            {
+                var _storeId = await _storeMappingService.CurrentStore();
+                queryStore = queryStore.Where(c => c.StoreId == _storeId);
+            }
+
+            var query = (from st in queryStore
                          group st by st.Keyword into groupedResult
                          select new
                          {
@@ -76,6 +87,7 @@ namespace Nop.Services.Common
                             Keyword = r.Keyword,
                             Count = r.Count
                         });
+            #endregion
 
             var result = await query.ToPagedListAsync(pageIndex, pageSize);
 

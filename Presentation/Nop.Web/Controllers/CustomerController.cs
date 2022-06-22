@@ -152,6 +152,7 @@ namespace Nop.Web.Controllers
             _captchaSettings = captchaSettings;
             _customerSettings = customerSettings;
             _dateTimeSettings = dateTimeSettings;
+            _downloadService = downloadService;
             _forumSettings = forumSettings;
             _gdprSettings = gdprSettings;
             _htmlEncoder = htmlEncoder;
@@ -463,6 +464,20 @@ namespace Nop.Web.Controllers
                             var customer = _customerSettings.UsernamesEnabled
                                 ? await _customerService.GetCustomerByUsernameAsync(customerUserName)
                                 : await _customerService.GetCustomerByEmailAsync(customerEmail);
+                            
+                            #region Multi-Tenant Plugin
+
+                            var _storeMappingService = Nop.Core.Infrastructure.EngineContext.Current.Resolve<Nop.Services.Stores.IStoreMappingService>();
+                            var storesId = _storeMappingService.GetStoreIdByEntityId(customer.Id, "Stores").LastOrDefault();
+
+                            if (storesId > 0 && storesId != (await _storeContext.GetCurrentStoreAsync()).Id)
+                            {
+                                ModelState.AddModelError("", await _localizationService.GetResourceAsync("Account.Login.WrongCredentials.NotRegistered"));
+                                break;
+
+                            }
+
+                            #endregion
 
                             return await _customerRegistrationService.SignInCustomerAsync(customer, returnUrl, model.RememberMe);
                         }
@@ -1056,6 +1071,22 @@ namespace Nop.Web.Controllers
         {
             if (string.IsNullOrEmpty(returnUrl) || !Url.IsLocalUrl(returnUrl))
                 returnUrl = Url.RouteUrl("Homepage");
+            #region Multi-Tenant Plugin
+            var _storeMappingService = Nop.Core.Infrastructure.EngineContext.Current.Resolve<Nop.Services.Stores.IStoreMappingService>();
+            string emailCustomer = (await _workContext.GetCurrentCustomerAsync()).Email;
+            var getCustomer = await _customerService.GetCustomerByEmailAsync(emailCustomer);
+            if (getCustomer != null)
+            {
+                var currentStoreId = _storeMappingService.GetStoreIdByEntityId(getCustomer.Id, "Stores").FirstOrDefault();
+                var currentAdminId = _storeMappingService.GetStoreIdByEntityId(getCustomer.Id, "Admin").FirstOrDefault();
+
+                if (currentStoreId <= 0 && currentAdminId <= 0)
+                {
+                    await _storeMappingService.InsertStoreMappingByEntityAsync(getCustomer.Id, "Stores", (await _storeContext.GetCurrentStoreAsync()).Id);
+                }
+            }
+
+            #endregion
 
             var model = await _customerModelFactory.PrepareRegisterResultModelAsync(resultId, returnUrl);
             return View(model);

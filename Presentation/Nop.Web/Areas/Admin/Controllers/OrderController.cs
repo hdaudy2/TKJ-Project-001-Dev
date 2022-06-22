@@ -869,6 +869,14 @@ namespace Nop.Web.Areas.Admin.Controllers
             if (order == null || order.Deleted)
                 return RedirectToAction("List");
 
+            #region Multi-Tenant Plugin
+            var _storeMappingService = Nop.Core.Infrastructure.EngineContext.Current.Resolve<Nop.Services.Stores.IStoreMappingService>();
+
+            if (!await _storeMappingService.TableEdit(order.StoreId))
+                return AccessDeniedView();
+
+            #endregion
+
             //a vendor does not have access to this functionality
             if (await _workContext.GetCurrentVendorAsync() != null && !await HasAccessToOrderAsync(order))
                 return RedirectToAction("List");

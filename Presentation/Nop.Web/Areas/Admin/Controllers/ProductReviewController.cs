@@ -106,6 +106,17 @@ namespace Nop.Web.Areas.Admin.Controllers
             if (productReview == null)
                 return RedirectToAction("List");
 
+            #region Multi-Tenant Plugin
+            var product = await _productService.GetProductByIdAsync(productReview.ProductId);
+            if (product == null || product.Deleted)
+                return RedirectToAction("List");
+
+            var _storeMappingService = Nop.Core.Infrastructure.EngineContext.Current.Resolve<Nop.Services.Stores.IStoreMappingService>();
+            if (!await _storeMappingService.AuthorizeAsync(product) && !await _storeMappingService.IsAdminStore())
+                return AccessDeniedView();
+
+            #endregion
+
             //a vendor should have access only to his products
             var currentVendor = await _workContext.GetCurrentVendorAsync();
             if (currentVendor != null && (await _productService.GetProductByIdAsync(productReview.ProductId)).VendorId != currentVendor.Id)

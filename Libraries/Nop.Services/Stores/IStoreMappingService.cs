@@ -83,5 +83,21 @@ namespace Nop.Services.Stores
         /// The task result contains the rue - authorized; otherwise, false
         /// </returns>
         Task<bool> AuthorizeAsync<TEntity>(TEntity entity, int storeId) where TEntity : BaseEntity, IStoreMappingSupported;
+
+        #region Multi-Tenant Plugin
+
+        Task<StoreMapping> GetStoreMappingByIdAsync(int storeMappingId);
+        List<int> GetStoreIdByEntityId(int entityId, string entityName);
+        List<int> GetEntityIdByListStoreId(int[] storeId, string entityName);
+        Task<IList<StoreMapping>> GetAllStoreMappingAsync(string entityName);
+        Task InsertStoreMappingByEntityAsync(int customerId, string entityName, int storeId);
+        Task Insert_Store_MappingAsync(StoreMapping storeMapping);
+        Task UpdateStoreMappingAsync(StoreMapping storeMapping);
+        Task<IPagedList<StoreMapping>> GetAllStoreMappingsAsync(int storeId = 0, int pageIndex = 0, int pageSize = int.MaxValue);
+        Task<bool> TableEdit(int storeId);
+        Task<int> CurrentStore();
+        Task<bool> IsAdminStore();
+        Task<bool> AuthorizeCustomer(int customerId);
+        #endregion
     }
 }

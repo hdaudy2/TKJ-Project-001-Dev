@@ -163,6 +163,26 @@ namespace Nop.Services.Catalog
         {
             var allProductTags = await _productTagRepository.GetAllAsync(query => query, getCacheKey: cache => default);
 
+            #region Multi-Tenant Plugin
+
+            var _workContext = Nop.Core.Infrastructure.EngineContext.Current.Resolve<Nop.Core.IWorkContext>();
+            var _storeMappingService = Nop.Core.Infrastructure.EngineContext.Current.Resolve<Nop.Services.Stores.IStoreMappingService>();
+            List<int> storeId = _storeMappingService.GetStoreIdByEntityId((await _workContext.GetCurrentCustomerAsync()).Id, "Stores");
+
+            if (storeId.Count > 0)
+            {
+                var productIds = _storeMappingService.GetEntityIdByListStoreId(storeId.ToArray(), "Product");
+                var tagIds = (from pt in _productTagRepository.Table
+                         join ppt in _productProductTagMappingRepository.Table on pt.Id equals ppt.ProductTagId
+                         where productIds.Contains(ppt.ProductId)
+                         orderby pt.Id
+                         select pt.Id).Distinct().ToList();
+
+                allProductTags = allProductTags.Where(tag => tagIds.Contains(tag.Id)).ToList();
+            }
+
+            #endregion
+            
             if (!string.IsNullOrEmpty(tagName))
                 allProductTags = allProductTags.Where(tag => tag.Name.Contains(tagName)).ToList();
 

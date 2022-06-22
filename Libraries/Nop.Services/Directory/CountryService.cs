@@ -16,6 +16,10 @@ namespace Nop.Services.Directory
     /// </summary>
     public partial class CountryService : ICountryService
     {
+        #region Multi-Tenant Plugin
+        public static CacheKey CountriesAllCacheKeyByStoreId => new CacheKey("Nop.country.bystoreid-{0}-{1}-{2}", "Nop.country");
+        #endregion
+
         #region Fields
 
         private readonly IStaticCacheManager _staticCacheManager;
@@ -68,8 +72,10 @@ namespace Nop.Services.Directory
         public virtual async Task<IList<Country>> GetAllCountriesAsync(int languageId = 0, bool showHidden = false)
         {
             var store = await _storeContext.GetCurrentStoreAsync();
-            var key = _staticCacheManager.PrepareKeyForDefaultCache(NopDirectoryDefaults.CountriesAllCacheKey, languageId,
-                showHidden, store);
+            
+            #region Multi-Tenant Plugin
+            var key = _staticCacheManager.PrepareKeyForDefaultCache(CountriesAllCacheKeyByStoreId, languageId, showHidden, (await _storeContext.GetCurrentStoreAsync()).Id);
+            #endregion
 
             return await _staticCacheManager.GetAsync(key, async () =>
             {

@@ -101,8 +101,25 @@ namespace Nop.Services.Shipping
             DateTime? createdFromUtc = null, DateTime? createdToUtc = null,
             int pageIndex = 0, int pageSize = int.MaxValue)
         {
+            #region Multi-Tenant Plugin
+            var _workContext = Nop.Core.Infrastructure.EngineContext.Current.Resolve<Nop.Core.IWorkContext>();
+            var _storeMappingService = Nop.Core.Infrastructure.EngineContext.Current.Resolve<Nop.Services.Stores.IStoreMappingService>();
+            var currentStoreId = _storeMappingService.GetStoreIdByEntityId((await _workContext.GetCurrentCustomerAsync()).Id, "Stores").FirstOrDefault();
+            #endregion
+
             var shipments = await _shipmentRepository.GetAllPagedAsync(query =>
             {
+                
+                #region Multi-Tenant Plugin
+                if (currentStoreId > 0)
+                {
+                    query = from s in query
+                            join o in _orderRepository.Table on s.OrderId equals o.Id
+                            where o.StoreId == currentStoreId
+                            select s;
+                }
+                #endregion
+
                 if (orderId > 0)
                     query = query.Where(o => o.OrderId == orderId);
 
@@ -245,6 +262,19 @@ namespace Nop.Services.Shipping
                 return new List<Shipment>();
 
             var shipments = _shipmentRepository.Table;
+            
+            #region Multi-Tenant Plugin
+            var _workContext = Nop.Core.Infrastructure.EngineContext.Current.Resolve<Nop.Core.IWorkContext>();
+            var _storeMappingService = Nop.Core.Infrastructure.EngineContext.Current.Resolve<Nop.Services.Stores.IStoreMappingService>();
+            var currentStoreId = _storeMappingService.GetStoreIdByEntityId((await _workContext.GetCurrentCustomerAsync()).Id, "Stores").FirstOrDefault();
+            if (currentStoreId > 0)
+            {
+                shipments = from s in shipments
+                            join o in _orderRepository.Table on s.OrderId equals o.Id
+                        where o.StoreId == currentStoreId
+                        select s;
+            }
+            #endregion
 
             if (shipped.HasValue) 
                 shipments = shipments.Where(s => s.ShippedDateUtc.HasValue == shipped);
