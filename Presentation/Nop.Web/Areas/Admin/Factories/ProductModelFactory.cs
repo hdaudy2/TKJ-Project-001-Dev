@@ -1847,6 +1847,62 @@ namespace Nop.Web.Areas.Admin.Factories
         }
 
         /// <summary>
+        /// Prepare paged tier price list model
+        /// </summary>
+        /// <param name="searchModel">Tier price search model</param>
+        /// <param name="product">Product</param>
+        /// <param name="storeId">Product</param>
+        /// <returns>
+        /// A task that represents the asynchronous operation
+        /// The task result contains the ier price list model
+        /// </returns>
+        public virtual async Task<TierPriceListModel> PrepareTierPriceListModelForDistributionsAsync(TierPriceSearchModel searchModel, Product product, int storeId)
+        {
+            if (searchModel == null)
+                throw new ArgumentNullException(nameof(searchModel));
+
+            if (product == null)
+                throw new ArgumentNullException(nameof(product));
+
+            //get tier prices
+            var tierPrices = new List<TierPrice>().ToPagedList(searchModel); 
+            
+            if(storeId == 0){
+                tierPrices = (await _productService.GetTierPricesByProductAsync(product.Id))
+                    .OrderBy(price => price.StoreId).ThenBy(price => price.Quantity).ThenBy(price => price.CustomerRoleId)
+                    .ToList().ToPagedList(searchModel);
+            }
+            if(storeId > 0){
+                tierPrices = (await _productService.GetTierPricesByProductAndStoreAsync(product.Id, storeId))
+                    .OrderBy(price => price.StoreId).ThenBy(price => price.Quantity).ThenBy(price => price.CustomerRoleId)
+                    .ToList().ToPagedList(searchModel);
+            }
+
+            //prepare grid model
+            var model = await new TierPriceListModel().PrepareToGridAsync(searchModel, tierPrices, () =>
+            {
+                return tierPrices.SelectAwait(async price =>
+                {
+                    //fill in model values from the entity
+                    var tierPriceModel = price.ToModel<TierPriceModel>();
+
+                    //fill in additional values (not existing in the entity)   
+                    tierPriceModel.Store = price.StoreId > 0
+                        ? ((await _storeService.GetStoreByIdAsync(price.StoreId))?.Name ?? "Deleted")
+                        : await _localizationService.GetResourceAsync("Admin.Catalog.Products.TierPrices.Fields.Store.All");
+                    tierPriceModel.CustomerRoleId = price.CustomerRoleId ?? 0;
+                    tierPriceModel.CustomerRole = price.CustomerRoleId.HasValue
+                        ? (await _customerService.GetCustomerRoleByIdAsync(price.CustomerRoleId.Value))?.Name
+                        : await _localizationService.GetResourceAsync("Admin.Catalog.Products.TierPrices.Fields.CustomerRole.All");
+
+                    return tierPriceModel;
+                });
+            });
+
+            return model;
+        }
+
+        /// <summary>
         /// Prepare tier price model
         /// </summary>
         /// <param name="model">Tier price model</param>

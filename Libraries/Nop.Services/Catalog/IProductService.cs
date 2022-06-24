@@ -593,6 +593,14 @@ namespace Nop.Services.Catalog
         Task<IList<TierPrice>> GetTierPricesByProductAsync(int productId);
 
         /// <summary>
+        /// Gets a tier prices by product identifier
+        /// </summary>
+        /// <param name="productId">Product identifier</param>
+        /// <param name="storeId">Store identifier</param>
+        /// <returns>A task that represents the asynchronous operation</returns>
+        Task<IList<TierPrice>> GetTierPricesByProductAndStoreAsync(int productId, int storeId);
+
+        /// <summary>
         /// Deletes a tier price
         /// </summary>
         /// <param name="tierPrice">Tier price</param>

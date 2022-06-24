@@ -2438,6 +2438,34 @@ namespace Nop.Web.Areas.Admin.Controllers
             return Json(model);
         }
 
+        [HttpPost]
+        /// <returns>A task that represents the asynchronous operation</returns>
+        public virtual async Task<IActionResult> TierPriceListForDistributer(TierPriceSearchModel searchModel)
+        {
+            if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageProducts))
+                return await AccessDeniedDataTablesJson();
+
+            //try to get a product with the specified id
+            var product = await _productService.GetProductByIdAsync(searchModel.ProductId)
+                ?? throw new ArgumentException("No product found with the specified id");
+
+            //a vendor should have access only to his products
+            if (await _workContext.GetCurrentVendorAsync() != null && product.VendorId != (await _workContext.GetCurrentVendorAsync()).Id)
+                return Content("This is not your product");
+
+            int StoreId = (await _storeContext.GetCurrentStoreAsync()).Id;
+            
+            var currentCustomer = await _workContext.GetCurrentCustomerAsync();
+            var isAdmin = await _customerService.IsAdminAsync(currentCustomer);
+            if(isAdmin) StoreId = 0;
+
+            //prepare model
+            var model = await _productModelFactory.PrepareTierPriceListModelForDistributionsAsync(searchModel, product, StoreId);
+
+            return Json(model);
+        }
+
+        /// <returns>A task that represents the asynchronous operation</returns>
         public virtual async Task<IActionResult> TierPriceCreatePopup(int productId)
         {
             if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageProducts))

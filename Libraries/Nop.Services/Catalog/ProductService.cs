@@ -2125,6 +2125,17 @@ namespace Nop.Services.Catalog
         }
 
         /// <summary>
+        /// Gets a tier prices by product identifier
+        /// </summary>
+        /// <param name="productId">Product identifier</param>
+        /// <param name="storeId">Store identifier</param>
+        /// <returns>A task that represents the asynchronous operation</returns>
+        public virtual async Task<IList<TierPrice>> GetTierPricesByProductAndStoreAsync(int productId, int storeId)
+        {
+            return await _tierPriceRepository.Table.Where(tp => tp.ProductId == productId && tp.StoreId == storeId).ToListAsync();
+        }
+
+        /// <summary>
         /// Deletes a tier price
         /// </summary>
         /// <param name="tierPrice">Tier price</param>
