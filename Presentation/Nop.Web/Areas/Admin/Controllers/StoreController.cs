@@ -1,7 +1,10 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Primitives;
 using Nop.Core;
 using Nop.Core.Domain.Customers;
 using Nop.Core.Domain.Stores;
@@ -12,9 +15,11 @@ using Nop.Services.Logging;
 using Nop.Services.Messages;
 using Nop.Services.Security;
 using Nop.Services.Stores;
+using Nop.Services.Shipping;
 using Nop.Web.Areas.Admin.Factories;
 using Nop.Web.Areas.Admin.Infrastructure.Mapper.Extensions;
 using Nop.Web.Areas.Admin.Models.Stores;
+using Nop.Web.Areas.Admin.Models.Shipping;
 using Nop.Web.Framework.Controllers;
 using Nop.Web.Framework.Mvc.Filters;
 
@@ -31,6 +36,8 @@ namespace Nop.Web.Areas.Admin.Controllers
         private readonly IPermissionService _permissionService;
         private readonly ISettingService _settingService;
         private readonly IStoreModelFactory _storeModelFactory;
+        private readonly IShippingModelFactory _shippingModelFactory;
+        private readonly IShippingService _shippingService;
         private readonly IStoreService _storeService;
         private readonly IGenericAttributeService _genericAttributeService;
         private readonly IWorkContext _workContext;
@@ -46,6 +53,8 @@ namespace Nop.Web.Areas.Admin.Controllers
             IPermissionService permissionService,
             ISettingService settingService,
             IStoreModelFactory storeModelFactory,
+            IShippingModelFactory shippingModelFactory,
+            IShippingService shippingService,
             IStoreService storeService,
             IGenericAttributeService genericAttributeService,
             IWorkContext workContext)
@@ -57,6 +66,8 @@ namespace Nop.Web.Areas.Admin.Controllers
             _permissionService = permissionService;
             _settingService = settingService;
             _storeModelFactory = storeModelFactory;
+            _shippingModelFactory = shippingModelFactory;
+            _shippingService = shippingService;
             _storeService = storeService;
             _genericAttributeService = genericAttributeService;
             _workContext = workContext;
@@ -265,6 +276,75 @@ namespace Nop.Web.Areas.Admin.Controllers
                 await _notificationService.ErrorNotificationAsync(exc);
                 return RedirectToAction("Edit", new { id = store.Id });
             }
+        }
+
+        #endregion
+
+        #region Store Shipping methods
+
+        /// <returns>A task that represents the asynchronous operation</returns>
+        public virtual async Task<IActionResult> Restrictions()
+        {
+            if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageShippingSettings))
+                return AccessDeniedView();
+
+            //prepare model
+            var model = await _storeModelFactory.PrepareStoreShippingMethodRestrictionModelAsync(new StoreShippingMethodRestrictionModel());
+
+            return View(model);
+        }
+
+        //we ignore this filter for increase RequestFormLimits
+        [IgnoreAntiforgeryToken]
+        //we use 2048 value because in some cases default value (1024) is too small for this action
+        [RequestFormLimits(ValueCountLimit = 2048)]
+        [HttpPost, ActionName("Restrictions")]
+        /// <returns>A task that represents the asynchronous operation</returns>
+        public virtual async Task<IActionResult> Restrictions(StoreShippingMethodRestrictionModel model, IFormCollection form)
+        {
+            if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageShippingSettings))
+                return AccessDeniedView();
+
+            var stories = await _storeService.GetAllStoresAsync();
+            var shippingMethods = await _shippingService.GetAllShippingMethodsAsync();
+
+            foreach (var shippingMethod in shippingMethods)
+            {
+                var formKey = "restrict_" + shippingMethod.Id;
+                var storeIdsToRestrict = !StringValues.IsNullOrEmpty(form[formKey])
+                    ? form[formKey].ToString().Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries)
+                    .Select(int.Parse)
+                    .ToList()
+                    : new List<int>();
+
+                foreach (var store in stories)
+                {
+                    var restrict = storeIdsToRestrict.Contains(store.Id);
+                    var StoreShippingMethods =
+                        await _storeService.GetStoreShippingMethodAsync(shippingMethod.Id, store.Id);
+
+                    if (restrict)
+                    {
+                        if (StoreShippingMethods.Any())
+                            continue;
+
+                        await _storeService.InsertStoreShippingMethodAsync(new StoreShippingMethod { StoreId = store.Id, ShippingMethodId = shippingMethod.Id});
+                        await _shippingService.UpdateShippingMethodAsync(shippingMethod);
+                    }
+                    else
+                    {
+                        if (!StoreShippingMethods.Any())
+                            continue;
+
+                        await _storeService.DeleteStoreShippingMethodAsync(StoreShippingMethods.FirstOrDefault());
+                        await _shippingService.UpdateShippingMethodAsync(shippingMethod);
+                    }
+                }
+            }
+
+            _notificationService.SuccessNotification(await _localizationService.GetResourceAsync("Admin.Configuration.Store.Restrictions.Updated"));
+
+            return View(await _storeModelFactory.PrepareStoreShippingMethodRestrictionModelAsync(new StoreShippingMethodRestrictionModel()));
         }
 
         #endregion

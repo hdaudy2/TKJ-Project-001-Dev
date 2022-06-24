@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Nop.Core.Domain.Stores;
+using Nop.Core.Domain.Shipping;
+using Nop.Services.Shipping.Pickup;
 using Nop.Data;
 
 namespace Nop.Services.Stores
@@ -15,14 +17,16 @@ namespace Nop.Services.Stores
         #region Fields
 
         private readonly IRepository<Store> _storeRepository;
+        private readonly IRepository<StoreShippingMethod> _StoreShippingMethodRepository;
 
         #endregion
 
         #region Ctor
 
-        public StoreService(IRepository<Store> storeRepository)
+        public StoreService(IRepository<Store> storeRepository, IRepository<StoreShippingMethod> StoreShippingMethodRepository)
         {
             _storeRepository = storeRepository;
+            _StoreShippingMethodRepository = StoreShippingMethodRepository;
         }
 
         #endregion
@@ -178,6 +182,99 @@ namespace Nop.Services.Stores
             return queryFilter.ToArray();
         }
 
+        #endregion
+    
+        #region Store Shipping methods
+        
+        /// <summary>
+        /// Does store restriction exist
+        /// </summary>
+        /// <param name="shippingMethod">Shipping method</param>
+        /// <param name="storeId">Store identifier</param>
+        /// <returns>
+        /// A task that represents the asynchronous operation
+        /// The task result contains the result
+        /// </returns>
+        public virtual async Task<bool> StoreRestrictionExistsAsync(ShippingMethod shippingMethod, int storeId)
+        {
+            if (shippingMethod == null)
+                throw new ArgumentNullException(nameof(shippingMethod));
+
+            var result = await _StoreShippingMethodRepository.Table
+                .AnyAsync(smcm => smcm.ShippingMethodId == shippingMethod.Id && smcm.StoreId == storeId);
+            
+            return result;
+        }
+
+        /// <summary>
+        /// Gets all StoreShippingMethod
+        /// </summary>
+        /// <returns>
+        /// A task that represents the asynchronous operation
+        /// The task result contains the stores
+        /// </returns>
+        public virtual async Task<IList<StoreShippingMethod>> GetAllStoreShippingMethodAsync()
+        {
+            var result = await _StoreShippingMethodRepository.GetAllAsync(query =>
+            {
+                return from s in query orderby s.Id select s;
+            }, cache => default);
+
+            return result;
+        }
+
+        /// <summary>
+        /// Gets all StoreShippingMethod
+        /// </summary>
+        /// <param name="storeId">Store identifier</param>
+        /// <returns>
+        /// A task that represents the asynchronous operation
+        /// The task result contains the stores
+        /// </returns>
+        public virtual async Task<IList<StoreShippingMethod>> GetAllStoreShippingMethodByStoreIdAsync(int storeId)
+        {
+            var query = _StoreShippingMethodRepository.Table.Where(smcm => smcm.StoreId == storeId);
+
+            return await query.ToListAsync();
+        }
+
+        /// <summary>
+        /// Gets store shipping method mappings
+        /// </summary>
+        /// <param name="shippingMethodId">The shipping method identifier</param>
+        /// <param name="storeId">Store identifier</param>
+        /// <returns>
+        /// A task that represents the asynchronous operation
+        /// The task result contains the shipping country mappings
+        /// </returns>
+        public virtual async Task<IList<StoreShippingMethod>> GetStoreShippingMethodAsync(int shippingMethodId,
+            int storeId)
+        {
+            var query = _StoreShippingMethodRepository.Table.Where(smcm =>
+                smcm.ShippingMethodId == shippingMethodId && smcm.StoreId == storeId);
+
+            return await query.ToListAsync();
+        }
+
+        /// <summary>
+        /// Inserts a store shipping method mapping
+        /// </summary>
+        /// <param name="StoreShippingMethod">Shipping country mapping</param>
+        /// <returns>A task that represents the asynchronous operation</returns>
+        public virtual async Task InsertStoreShippingMethodAsync(StoreShippingMethod StoreShippingMethod)
+        {
+            await _StoreShippingMethodRepository.InsertAsync(StoreShippingMethod);
+        }
+
+        /// <summary>
+        /// Delete the store shipping method mapping
+        /// </summary>
+        /// <param name="StoreShippingMethod">Shipping country mapping</param>
+        /// <returns>A task that represents the asynchronous operation</returns>
+        public virtual async Task DeleteStoreShippingMethodAsync(StoreShippingMethod StoreShippingMethod)
+        {
+            await _StoreShippingMethodRepository.DeleteAsync(StoreShippingMethod);
+        }
         #endregion
 
         #region Multi-Tenant Plugin
