@@ -101,6 +101,34 @@ namespace Nop.Web.Areas.Admin.Factories
 
         #endregion
 
+        #region Multi-Tenant Plugin
+        public virtual async Task PrepareStoresMappingModelAsync(CategoryModel model, Category category, bool excludeProperties)
+        {
+            if (model == null)
+                throw new ArgumentNullException(nameof(model));
+
+            var _storeMappingService = Nop.Core.Infrastructure.EngineContext.Current.Resolve<Nop.Services.Stores.IStoreMappingService>();
+            var _workContext = Nop.Core.Infrastructure.EngineContext.Current.Resolve<Core.IWorkContext>();
+            List<int> storeId = _storeMappingService.GetStoreIdByEntityId((await _workContext.GetCurrentCustomerAsync()).Id, "Stores");
+
+            if (!excludeProperties)
+            {
+                if (category != null)
+                {
+                    model.SelectedStoreIds = (await _storeMappingService.GetStoresIdsWithAccessAsync(category)).ToList();
+                }
+                else
+                {
+                    if (storeId.Count > 0) model.SelectedStoreIds = storeId;
+                }
+
+                if (storeId.Count <= 0)
+                    model.LimitedToStores = false;
+                else model.LimitedToStores = true;
+            }
+        }
+        #endregion
+
         #region Methods
 
         /// <summary>
@@ -256,7 +284,9 @@ namespace Nop.Web.Areas.Admin.Factories
 
             //prepare model stores
             await _storeMappingSupportedModelFactory.PrepareModelStoresAsync(model, category, excludeProperties);
-
+            #region Multi-Tenant Plugin
+            await PrepareStoresMappingModelAsync(model, category, excludeProperties);
+            #endregion
             return model;
         }
 

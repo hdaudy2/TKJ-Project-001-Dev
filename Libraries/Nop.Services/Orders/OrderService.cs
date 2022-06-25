@@ -12,6 +12,7 @@ using Nop.Core.Domain.Orders;
 using Nop.Core.Domain.Payments;
 using Nop.Core.Domain.Shipping;
 using Nop.Data;
+using Nop.Data.Extensions;
 using Nop.Services.Catalog;
 using Nop.Services.Html;
 using Nop.Services.Shipping;
@@ -243,6 +244,16 @@ namespace Nop.Services.Orders
             string billingPhone = null, string billingEmail = null, string billingLastName = "",
             string orderNotes = null, int pageIndex = 0, int pageSize = int.MaxValue, bool getOnlyTotalCount = false)
         {
+            #region Multi-Tenant Plugin
+            var _workContext = Nop.Core.Infrastructure.EngineContext.Current.Resolve<Nop.Core.IWorkContext>();
+            var _storeMappingService = Nop.Core.Infrastructure.EngineContext.Current.Resolve<Nop.Services.Stores.IStoreMappingService>();
+            var currentStoreId = _storeMappingService.GetStoreIdByEntityId((await _workContext.GetCurrentCustomerAsync()).Id, "Stores").FirstOrDefault();
+            if (storeId == 0 && currentStoreId > 0)
+            {
+                storeId = currentStoreId;
+            }
+            #endregion
+
             var query = _orderRepository.Table;
 
             if (storeId > 0)
@@ -903,6 +914,15 @@ namespace Nop.Services.Orders
             int customerId = 0, int initialOrderId = 0, OrderStatus? initialOrderStatus = null,
             int pageIndex = 0, int pageSize = int.MaxValue, bool showHidden = false)
         {
+            #region Multi-Tenant Plugin
+            var _workContext = Nop.Core.Infrastructure.EngineContext.Current.Resolve<Nop.Core.IWorkContext>();
+            var _storeMappingService = Nop.Core.Infrastructure.EngineContext.Current.Resolve<Nop.Services.Stores.IStoreMappingService>();
+            var currentStoreId = _storeMappingService.GetStoreIdByEntityId((await _workContext.GetCurrentCustomerAsync()).Id, "Stores").FirstOrDefault();
+            if (storeId == 0 && currentStoreId > 0)
+            {
+                storeId = currentStoreId;
+            }
+            #endregion
             int? initialOrderStatusId = null;
             if (initialOrderStatus.HasValue)
                 initialOrderStatusId = (int)initialOrderStatus.Value;
@@ -965,6 +985,26 @@ namespace Nop.Services.Orders
         }
 
         #endregion
+
+        #endregion
+
+        #region Multi-Tenant Plugin
+
+        public virtual async Task<OrderItem> GetOrderItemByOrderIdAsync(int OrderId)
+        {
+            if (OrderId == 0)
+                return null;
+            var query = from orderItem in _orderItemRepository.Table
+                        join o in _orderRepository.Table on orderItem.OrderId equals o.Id
+                        join p in _productRepository.Table on orderItem.ProductId equals p.Id
+                        where
+                        !o.Deleted
+                        orderby o.CreatedOnUtc descending, orderItem.Id
+                        select orderItem;
+
+            var orderItems = query.FirstOrDefault();
+            return orderItems;
+        }
 
         #endregion
     }

@@ -11,6 +11,11 @@
         /// Gets a system name of 'administrators' customer role
         /// </summary>
         public static string AdministratorsRoleName => "Administrators";
+        
+        /// <summary>
+        /// Gets a system name of 'store administrators' customer role
+        /// </summary>
+        public static string StoreAdministratorsRoleName => "Stores";
 
         /// <summary>
         /// Gets a system name of 'forum moderators' customer role

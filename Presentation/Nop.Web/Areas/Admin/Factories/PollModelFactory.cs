@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Nop.Core.Domain.Catalog;
@@ -179,7 +180,9 @@ namespace Nop.Web.Areas.Admin.Factories
 
             //prepare available stores
             await _storeMappingSupportedModelFactory.PrepareModelStoresAsync(model, poll, excludeProperties);
-
+            #region Multi-Tenant Plugin
+            await PrepareStoresMappingModelAsync(model, poll, excludeProperties);
+            #endregion
             return model;
         }
 
@@ -210,6 +213,34 @@ namespace Nop.Web.Areas.Admin.Factories
             return model;
         }
 
+        #endregion
+
+        #region Multi-Tenant Plugin
+        public virtual async Task PrepareStoresMappingModelAsync(PollModel model, Poll poll, bool excludeProperties)
+        {
+            if (model == null)
+                throw new ArgumentNullException(nameof(model));
+
+            var _storeMappingService = Nop.Core.Infrastructure.EngineContext.Current.Resolve<Nop.Services.Stores.IStoreMappingService>();
+            var _workContext = Nop.Core.Infrastructure.EngineContext.Current.Resolve<Core.IWorkContext>();
+            List<int> storeId = _storeMappingService.GetStoreIdByEntityId((await _workContext.GetCurrentCustomerAsync()).Id, "Stores");
+
+            if (!excludeProperties)
+            {
+                if (poll != null)
+                {
+                    model.SelectedStoreIds = (await _storeMappingService.GetStoresIdsWithAccessAsync(poll)).ToList();
+                }
+                else
+                {
+                    if (storeId.Count > 0) model.SelectedStoreIds = storeId;
+                }
+
+                if (storeId.Count <= 0)
+                    model.LimitedToStores = false;
+                else model.LimitedToStores = true;
+            }
+        }
         #endregion
     }
 }

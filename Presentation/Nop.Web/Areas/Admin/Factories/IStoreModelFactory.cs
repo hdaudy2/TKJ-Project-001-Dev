@@ -40,5 +40,17 @@ namespace Nop.Web.Areas.Admin.Factories
         /// The task result contains the store model
         /// </returns>
         Task<StoreModel> PrepareStoreModelAsync(StoreModel model, Store store, bool excludeProperties = false);
+
+        #region Store Shipping methods
+        /// <summary>
+        /// Prepare store shipping method restriction model
+        /// </summary>
+        /// <param name="model">Store Shipping method restriction model</param>
+        /// <returns>
+        /// A task that represents the asynchronous operation
+        /// The task result contains the shipping method restriction model
+        /// </returns>
+        Task<StoreShippingMethodRestrictionModel> PrepareStoreShippingMethodRestrictionModelAsync(StoreShippingMethodRestrictionModel model);
+        #endregion
     }
 }

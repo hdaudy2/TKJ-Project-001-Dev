@@ -110,6 +110,34 @@ namespace Nop.Web.Areas.Admin.Factories
 
         #endregion
 
+        #region Multi-Tenant Plugin
+        public virtual async Task PrepareStoresMappingModelAsync(CurrencyModel model, Currency currency, bool excludeProperties)
+        {
+            if (model == null)
+                throw new ArgumentNullException(nameof(model));
+
+            var _storeMappingService = Nop.Core.Infrastructure.EngineContext.Current.Resolve<Nop.Services.Stores.IStoreMappingService>();
+            var _workContext = Nop.Core.Infrastructure.EngineContext.Current.Resolve<Core.IWorkContext>();
+            List<int> storeId = _storeMappingService.GetStoreIdByEntityId((await _workContext.GetCurrentCustomerAsync()).Id, "Stores");
+
+            if (!excludeProperties)
+            {
+                if (currency != null)
+                {
+                    model.SelectedStoreIds = (await _storeMappingService.GetStoresIdsWithAccessAsync(currency)).ToList();
+                }
+                else
+                {
+                    if (storeId.Count > 0) model.SelectedStoreIds = storeId;
+                }
+
+                if (storeId.Count <= 0)
+                    model.LimitedToStores = false;
+                else model.LimitedToStores = true;
+            }
+        }
+        #endregion
+
         #region Methods
 
         /// <summary>
@@ -148,8 +176,21 @@ namespace Nop.Web.Areas.Admin.Factories
             if (searchModel == null)
                 throw new ArgumentNullException(nameof(searchModel));
 
+            #region Multi-Tenant Plugin
+
+            int storeId = 0;
+            var _storeMappingService = Nop.Core.Infrastructure.EngineContext.Current.Resolve<Nop.Services.Stores.IStoreMappingService>();
+            var _workContext = Nop.Core.Infrastructure.EngineContext.Current.Resolve<Core.IWorkContext>();
+            int storeIds = _storeMappingService.GetStoreIdByEntityId((await _workContext.GetCurrentCustomerAsync()).Id, "Stores").FirstOrDefault();
+            if (storeIds != 0)
+            {
+                storeId = storeIds;
+            }
+
             //get currencies
-            var currencies = (await _currencyService.GetAllCurrenciesAsync(showHidden: true)).ToPagedList(searchModel);
+            var currencies = (await _currencyService.GetAllCurrenciesAsync(showHidden: true, storeId: storeId)).ToPagedList(searchModel);
+
+            #endregion
 
             //prepare list model
             var model = new CurrencyListModel().PrepareToGrid(searchModel, currencies, () =>
@@ -212,7 +253,9 @@ namespace Nop.Web.Areas.Admin.Factories
 
             //prepare available stores
             await _storeMappingSupportedModelFactory.PrepareModelStoresAsync(model, currency, excludeProperties);
-
+            #region Multi-Tenant Plugin
+            await PrepareStoresMappingModelAsync(model, currency, excludeProperties);
+            #endregion
             return model;
         }
 

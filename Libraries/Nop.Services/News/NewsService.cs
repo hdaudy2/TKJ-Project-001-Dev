@@ -169,6 +169,15 @@ namespace Nop.Services.News
         public virtual async Task<IList<NewsComment>> GetAllCommentsAsync(int customerId = 0, int storeId = 0, int? newsItemId = null,
             bool? approved = null, DateTime? fromUtc = null, DateTime? toUtc = null, string commentText = null)
         {
+            #region Multi-Tenant Plugin
+            var _storeMappingService = Nop.Core.Infrastructure.EngineContext.Current.Resolve<Nop.Services.Stores.IStoreMappingService>();
+            //Current Store Admin
+            if (await _storeMappingService.CurrentStore() > 0)
+            {
+                storeId = await _storeMappingService.CurrentStore();
+            }
+            #endregion
+
             return await _newsCommentRepository.GetAllAsync(query =>
             {
                 if (approved.HasValue)
@@ -237,6 +246,15 @@ namespace Nop.Services.News
         /// </returns>
         public virtual async Task<int> GetNewsCommentsCountAsync(NewsItem newsItem, int storeId = 0, bool? isApproved = null)
         {
+            #region Multi-Tenant Plugin
+            var _storeMappingService = Nop.Core.Infrastructure.EngineContext.Current.Resolve<Nop.Services.Stores.IStoreMappingService>();
+            //Current Store Admin
+            if (await _storeMappingService.CurrentStore() > 0)
+            {
+                storeId = await _storeMappingService.CurrentStore();
+            }
+            #endregion
+
             var query = _newsCommentRepository.Table.Where(comment => comment.NewsItemId == newsItem.Id);
 
             if (storeId > 0)

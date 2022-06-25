@@ -106,7 +106,16 @@ namespace Nop.Web.Areas.Admin.Controllers
             await _countryService.UpdateCountryAsync(country);
 
             var existingStoreMappings = await _storeMappingService.GetStoreMappingsAsync(country);
-            var allStores = await _storeService.GetAllStoresAsync();
+            #region Multi-Tenant Plugin
+
+            var _workContext = Nop.Core.Infrastructure.EngineContext.Current.Resolve<Nop.Core.IWorkContext>();
+            var allStores = await _storeService.GetAllStoresByEntityNameAsync((await _workContext.GetCurrentCustomerAsync()).Id, "Stores");
+            if (allStores.Count <= 0)
+            {
+                allStores = await _storeService.GetAllStoresAsync();
+            }
+
+            #endregion
             foreach (var store in allStores)
             {
                 if (model.SelectedStoreIds.Contains(store.Id))
@@ -213,6 +222,12 @@ namespace Nop.Web.Areas.Admin.Controllers
             var country = await _countryService.GetCountryByIdAsync(id);
             if (country == null)
                 return RedirectToAction("List");
+
+            #region Multi-Tenant Plugin
+            if (!await _storeMappingService.AuthorizeAsync(country) && !await _storeMappingService.IsAdminStore())
+                return AccessDeniedView();
+
+            #endregion
 
             //prepare model
             var model = await _countryModelFactory.PrepareCountryModelAsync(null, country);

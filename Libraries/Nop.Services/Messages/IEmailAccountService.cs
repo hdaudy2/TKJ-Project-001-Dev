@@ -1,4 +1,6 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using Nop.Core.Domain.Messages;
 
@@ -41,6 +43,16 @@ namespace Nop.Services.Messages
         Task<EmailAccount> GetEmailAccountByIdAsync(int emailAccountId);
 
         /// <summary>
+        /// Gets default email account by Store identifier
+        /// </summary>
+        /// <param name="storeId">Store identifier</param>
+        /// <returns>
+        /// A task that represents the asynchronous operation
+        /// The task result contains the email account
+        /// </returns>
+        Task<EmailAccount> GetDefaultEmailAccountByStoreIdAsync(int storeId);
+
+        /// <summary>
         /// Gets all email accounts
         /// </summary>
         /// <returns>
@@ -48,5 +60,15 @@ namespace Nop.Services.Messages
         /// The task result contains the email accounts list
         /// </returns>
         Task<IList<EmailAccount>> GetAllEmailAccountsAsync();
+
+        /// <summary>
+        /// Gets all email accounts
+        /// </summary>
+        /// <param name="StoreId">Store identifier</param>
+        /// <returns>
+        /// A task that represents the asynchronous operation
+        /// The task result contains the email accounts list
+        /// </returns>
+        Task<IList<EmailAccount>> GetAllEmailAccountsAsync(Nullable<int> StoreId);
     }
 }

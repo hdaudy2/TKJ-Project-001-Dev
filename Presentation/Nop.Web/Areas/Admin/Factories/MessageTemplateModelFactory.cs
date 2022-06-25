@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc.Rendering;
@@ -97,10 +98,22 @@ namespace Nop.Web.Areas.Admin.Factories
 
             //get message templates
             var messageTemplates = (await _messageTemplateService
-                .GetAllMessageTemplatesAsync(searchModel.SearchStoreId, searchModel.SearchKeywords)).ToPagedList(searchModel);
+                .GetAllMessageTemplatesAsync(storeId: searchModel.SearchStoreId)).ToPagedList(searchModel);
+
+            #region Multi-Tenant Plugin
+
+            //stores
+            var _workContext = Nop.Core.Infrastructure.EngineContext.Current.Resolve<Nop.Core.IWorkContext>();
+            var allStores = await _storeService.GetAllStoresByEntityNameAsync((await _workContext.GetCurrentCustomerAsync()).Id, "Stores");
+            if (allStores.Count <= 0)
+            {
+                allStores = await _storeService.GetAllStoresAsync();
+            }
 
             //prepare store names (to avoid loading for each message template)
-            var stores = (await _storeService.GetAllStoresAsync()).Select(store => new { store.Id, store.Name }).ToList();
+            var stores = allStores.Select(store => new { store.Id, store.Name }).ToList();
+
+            #endregion
 
             //prepare list model
             var model = await new MessageTemplateListModel().PrepareToGridAsync(searchModel, messageTemplates, () =>
@@ -185,7 +198,9 @@ namespace Nop.Web.Areas.Admin.Factories
 
             //prepare available stores
             await _storeMappingSupportedModelFactory.PrepareModelStoresAsync(model, messageTemplate, excludeProperties);
-
+            #region Multi-Tenant Plugin
+            await PrepareStoresMappingModelAsync(model, messageTemplate, excludeProperties);
+            #endregion
             return model;
         }
 
@@ -220,6 +235,34 @@ namespace Nop.Web.Areas.Admin.Factories
             return model;
         }
 
+        #endregion
+
+        #region Multi-Tenant Plugin
+        public virtual async Task PrepareStoresMappingModelAsync(MessageTemplateModel model, MessageTemplate messageTemplate, bool excludeProperties)
+        {
+            if (model == null)
+                throw new ArgumentNullException(nameof(model));
+
+            var _storeMappingService = Nop.Core.Infrastructure.EngineContext.Current.Resolve<Nop.Services.Stores.IStoreMappingService>();
+            var _workContext = Nop.Core.Infrastructure.EngineContext.Current.Resolve<Core.IWorkContext>();
+            List<int> storeId = _storeMappingService.GetStoreIdByEntityId((await _workContext.GetCurrentCustomerAsync()).Id, "Stores");
+
+            if (!excludeProperties)
+            {
+                if (messageTemplate != null)
+                {
+                    model.SelectedStoreIds = (await _storeMappingService.GetStoresIdsWithAccessAsync(messageTemplate)).ToList();
+                }
+                else
+                {
+                    if (storeId.Count > 0) model.SelectedStoreIds = storeId;
+                }
+
+                if (storeId.Count <= 0)
+                    model.LimitedToStores = false;
+                else model.LimitedToStores = true;
+            }
+        }
         #endregion
     }
 }

@@ -31,7 +31,14 @@ namespace Nop.Web.Areas.Admin.Components
             if (!enabled)
             {
                 //overridden settings
-                var stores = await _storeService.GetAllStoresAsync();
+                #region Multi-Tenant Plugin
+                var _workContext = Nop.Core.Infrastructure.EngineContext.Current.Resolve<Nop.Core.IWorkContext>();
+                var stores = await _storeService.GetAllStoresByEntityNameAsync((await _workContext.GetCurrentCustomerAsync()).Id, "Stores");
+                if (stores.Count <= 0)
+                {
+                    stores = await _storeService.GetAllStoresAsync();
+                }
+                #endregion
                 foreach (var store in stores)
                 {
                     var catalogSettings = await _settingService.LoadSettingAsync<CatalogSettings>(store.Id);

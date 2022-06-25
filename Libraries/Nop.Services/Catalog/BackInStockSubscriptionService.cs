@@ -68,6 +68,16 @@ namespace Nop.Services.Catalog
         public virtual async Task<IPagedList<BackInStockSubscription>> GetAllSubscriptionsByCustomerIdAsync(int customerId,
             int storeId = 0, int pageIndex = 0, int pageSize = int.MaxValue)
         {
+            #region Multi-Tenant Plugin
+
+            var _storeMappingService = Nop.Core.Infrastructure.EngineContext.Current.Resolve<Nop.Services.Stores.IStoreMappingService>();
+            //Current Store Admin
+            if (await _storeMappingService.CurrentStore() > 0)
+            {
+                storeId = await _storeMappingService.CurrentStore();
+            }
+
+            #endregion
             return await _backInStockSubscriptionRepository.GetAllPagedAsync(query =>
             {
                 //customer
@@ -178,6 +188,16 @@ namespace Nop.Services.Catalog
         public virtual async Task<IPagedList<BackInStockSubscription>> GetAllSubscriptionsByProductIdAsync(int productId,
             int storeId = 0, int pageIndex = 0, int pageSize = int.MaxValue)
         {
+            #region Multi-Tenant Plugin
+
+            var _storeMappingService = Nop.Core.Infrastructure.EngineContext.Current.Resolve<Nop.Services.Stores.IStoreMappingService>();
+            //Current Store Admin
+            if (await _storeMappingService.CurrentStore() > 0)
+            {
+                storeId = await _storeMappingService.CurrentStore();
+            }
+
+            #endregion
             return await _backInStockSubscriptionRepository.GetAllPagedAsync(query =>
             {
                 //product

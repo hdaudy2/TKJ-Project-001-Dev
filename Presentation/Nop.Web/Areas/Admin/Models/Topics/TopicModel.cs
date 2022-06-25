@@ -103,6 +103,14 @@ namespace Nop.Web.Areas.Admin.Models.Topics
 
         public string TopicName { get; set; }
 
+        #region Multi-Tenant Plugin
+
+        //Store mapping
+        [NopResourceDisplayName("Admin.Catalog.Products.Fields.LimitedToStores")]
+        public bool LimitedToStores { get; set; }
+
+        #endregion
+
         #endregion
     }
 

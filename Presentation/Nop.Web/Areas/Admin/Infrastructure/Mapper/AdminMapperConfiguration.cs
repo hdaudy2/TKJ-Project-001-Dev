@@ -94,6 +94,9 @@ namespace Nop.Web.Areas.Admin.Infrastructure.Mapper
             CreateLocalizationMaps();
             CreateLoggingMaps();
             CreateMediaMaps();
+            #region Multi-Tenant Plugin
+            CreateStoreMappingMaps();
+            #endregion
             CreateMessagesMaps();
             CreateNewsMaps();
             CreateOrdersMaps();
@@ -1681,6 +1684,15 @@ namespace Nop.Web.Areas.Admin.Infrastructure.Mapper
                 .ForMember(entity => entity.AddressId, options => options.Ignore());
         }
 
+        #endregion
+
+        #region Multi-Tenant Plugin
+        protected virtual void CreateStoreMappingMaps()
+        {
+            CreateMap<StoreMapping, StoreMappingModel>();
+            CreateMap<StoreMappingModel, StoreMapping>();
+
+        }
         #endregion
 
         #region Properties

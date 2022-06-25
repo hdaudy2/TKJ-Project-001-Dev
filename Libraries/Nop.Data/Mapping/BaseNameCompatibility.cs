@@ -7,6 +7,7 @@ using Nop.Core.Domain.Forums;
 using Nop.Core.Domain.News;
 using Nop.Core.Domain.Security;
 using Nop.Core.Domain.Shipping;
+using Nop.Core.Domain.Stores;
 
 namespace Nop.Data.Mapping
 {
@@ -27,6 +28,7 @@ namespace Nop.Data.Mapping
             { typeof(DiscountProductMapping), "Discount_AppliedToProducts" },
             { typeof(PermissionRecordCustomerRoleMapping), "PermissionRecord_Role_Mapping" },
             { typeof(ShippingMethodCountryMapping), "ShippingMethodRestrictions" },
+            { typeof(StoreShippingMethod), "StoreShippingMethod" },
             { typeof(ProductCategory), "Product_Category_Mapping" },
             { typeof(ProductManufacturer), "Product_Manufacturer_Mapping" },
             { typeof(ProductPicture), "Product_Picture_Mapping" },
@@ -61,6 +63,8 @@ namespace Nop.Data.Mapping
             { (typeof(CustomerAddressMapping), "CustomerId"), "Customer_Id" },
             { (typeof(ShippingMethodCountryMapping), "ShippingMethodId"), "ShippingMethod_Id" },
             { (typeof(ShippingMethodCountryMapping), "CountryId"), "Country_Id" },
+            { (typeof(StoreShippingMethod), "ShippingMethodId"), "ShippingMethod_Id" },
+            { (typeof(StoreShippingMethod), "StoreId"), "Store_Id" },
         };
     }
 }

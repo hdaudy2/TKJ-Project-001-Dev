@@ -88,6 +88,7 @@ namespace Nop.Data.Migrations.Installation
             Create.TableFor<ShoppingCartItem>();
             Create.TableFor<Store>();
             Create.TableFor<StoreMapping>();
+            Create.TableFor<StoreShippingMethod>();
             Create.TableFor<Language>();
             Create.TableFor<LocaleStringResource>();
             Create.TableFor<LocalizedProperty>();

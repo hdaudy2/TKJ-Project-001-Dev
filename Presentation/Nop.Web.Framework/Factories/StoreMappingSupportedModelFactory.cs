@@ -45,8 +45,16 @@ namespace Nop.Web.Framework.Factories
             if (model == null)
                 throw new ArgumentNullException(nameof(model));
 
-            //prepare available stores
-            var availableStores = await _storeService.GetAllStoresAsync();
+            #region Multi-Tenant Plugin
+
+            var _workContext = Nop.Core.Infrastructure.EngineContext.Current.Resolve<Nop.Core.IWorkContext>();
+            var availableStores = await _storeService.GetAllStoresByEntityNameAsync((await _workContext.GetCurrentCustomerAsync()).Id, "Stores");
+            if (availableStores.Count <= 0)
+            {
+                availableStores = await _storeService.GetAllStoresAsync();
+            }
+
+            #endregion
             model.AvailableStores = availableStores.Select(store => new SelectListItem
             {
                 Text = store.Name,

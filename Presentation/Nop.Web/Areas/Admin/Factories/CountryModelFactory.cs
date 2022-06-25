@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Nop.Core.Domain.Directory;
@@ -69,6 +70,34 @@ namespace Nop.Web.Areas.Admin.Factories
 
         #endregion
 
+        #region Multi-Tenant Plugin
+        public virtual async Task PrepareStoresMappingModelAsync(CountryModel model, Country country, bool excludeProperties)
+        {
+            if (model == null)
+                throw new ArgumentNullException(nameof(model));
+
+            var _storeMappingService = Nop.Core.Infrastructure.EngineContext.Current.Resolve<Nop.Services.Stores.IStoreMappingService>();
+            var _workContext = Nop.Core.Infrastructure.EngineContext.Current.Resolve<Core.IWorkContext>();
+            List<int> storeId = _storeMappingService.GetStoreIdByEntityId((await _workContext.GetCurrentCustomerAsync()).Id, "Stores");
+
+            if (!excludeProperties)
+            {
+                if (country != null)
+                {
+                    model.SelectedStoreIds = (await _storeMappingService.GetStoresIdsWithAccessAsync(country)).ToList();
+                }
+                else
+                {
+                    if (storeId.Count > 0) model.SelectedStoreIds = storeId;
+                }
+
+                if (storeId.Count <= 0)
+                    model.LimitedToStores = false;
+                else model.LimitedToStores = true;
+            }
+        }
+        #endregion
+
         #region Methods
 
         /// <summary>
@@ -103,8 +132,23 @@ namespace Nop.Web.Areas.Admin.Factories
             if (searchModel == null)
                 throw new ArgumentNullException(nameof(searchModel));
 
+
             //get countries
-            var countries = (await _countryService.GetAllCountriesAsync(showHidden: true)).ToPagedList(searchModel);
+            #region Multi-Tenant Plugin
+
+            bool showHidden = true;
+            var _storeMappingService = Nop.Core.Infrastructure.EngineContext.Current.Resolve<Nop.Services.Stores.IStoreMappingService>();
+            var _workContext = Nop.Core.Infrastructure.EngineContext.Current.Resolve<Core.IWorkContext>();
+            int storeIds = _storeMappingService.GetStoreIdByEntityId((await _workContext.GetCurrentCustomerAsync()).Id, "Stores").FirstOrDefault();
+            if (storeIds != 0)
+            {
+                showHidden = false;
+            }
+
+            //get countries
+            var countries = (await _countryService.GetAllCountriesAsync(showHidden: showHidden)).ToPagedList(searchModel);
+
+            #endregion
 
             //prepare list model
             var model = await new CountryListModel().PrepareToGridAsync(searchModel, countries, () =>
@@ -170,7 +214,9 @@ namespace Nop.Web.Areas.Admin.Factories
 
             //prepare available stores
             await _storeMappingSupportedModelFactory.PrepareModelStoresAsync(model, country, excludeProperties);
-
+            #region Multi-Tenant Plugin
+            await PrepareStoresMappingModelAsync(model, country, excludeProperties);
+            #endregion
             return model;
         }
 

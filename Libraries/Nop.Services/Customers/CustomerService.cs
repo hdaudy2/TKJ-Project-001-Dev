@@ -142,8 +142,24 @@ namespace Nop.Services.Customers
             string company = null, string phone = null, string zipPostalCode = null, string ipAddress = null,
             int pageIndex = 0, int pageSize = int.MaxValue, bool getOnlyTotalCount = false)
         {
+            #region Multi-Tenant Plugin
+            var _storeMappingService = Nop.Core.Infrastructure.EngineContext.Current.Resolve<Nop.Services.Stores.IStoreMappingService>();
+            var storeMappingRepository = Nop.Core.Infrastructure.EngineContext.Current.Resolve<IRepository<Nop.Core.Domain.Stores.StoreMapping>>();
+            int storeId = await _storeMappingService.CurrentStore();
+            #endregion
+
             var customers = await _customerRepository.GetAllPagedAsync(query =>
             {
+                #region Multi-Tenant Plugin
+                if (storeId > 0)
+                    query = from c in query
+                            join sm in storeMappingRepository.Table
+                            on new { c1 = c.Id, c2 = "Stores" } equals new { c1 = sm.EntityId, c2 = sm.EntityName } into c_sm
+                            from sm in c_sm.DefaultIfEmpty()
+                            where storeId == sm.StoreId
+                            select c;
+                #endregion
+
                 if (createdFromUtc.HasValue)
                     query = query.Where(c => createdFromUtc.Value <= c.CreatedOnUtc);
                 if (createdToUtc.HasValue)
@@ -307,6 +323,20 @@ namespace Nop.Services.Customers
 
             if (customerRoleIds != null && customerRoleIds.Length > 0)
                 query = query.Where(c => _customerCustomerRoleMappingRepository.Table.Any(ccrm => ccrm.CustomerId == c.Id && customerRoleIds.Contains(ccrm.CustomerRoleId)));
+
+            #region Multi-Tenant Plugin
+            var _storeMappingService = Nop.Core.Infrastructure.EngineContext.Current.Resolve<Nop.Services.Stores.IStoreMappingService>();
+            int storeId = await _storeMappingService.CurrentStore();
+            var storeMappingRepository = Nop.Core.Infrastructure.EngineContext.Current.Resolve<IRepository<Nop.Core.Domain.Stores.StoreMapping>>();
+
+            if (storeId > 0)
+                query = from c in query
+                        join sm in storeMappingRepository.Table
+                        on new { c1 = c.Id, c2 = "Stores" } equals new { c1 = sm.EntityId, c2 = sm.EntityName } into c_sm
+                        from sm in c_sm.DefaultIfEmpty()
+                        where storeId == sm.StoreId || storeId == 0
+                        select c;
+            #endregion
 
             query = query.OrderByDescending(c => c.LastActivityDateUtc);
             var customers = await query.ToPagedListAsync(pageIndex, pageSize);
@@ -1138,6 +1168,25 @@ namespace Nop.Services.Customers
 
         #endregion
 
+        #region Email Restriction
+
+        /// <summary>
+        /// Adds a coupon code
+        /// </summary>
+        /// <param name="customer">Customer</param>
+        /// <returns>
+        /// A task that represents the asynchronous operation
+        /// The task result contains the new coupon codes document
+        /// </returns>
+        public virtual async Task<IList<GenericAttribute>> GetGenericAttributesByCustomerAsync(Customer customer)
+        {
+            var keyGroup = customer.GetType().Name;
+            var genericAttributes = await _genericAttributeService.GetAttributesForEntityAsync(customer.Id, keyGroup);
+            return genericAttributes;
+        }
+
+        #endregion
+
         #region Customer roles
 
         /// <summary>
@@ -1291,6 +1340,13 @@ namespace Nop.Services.Customers
                         orderby cr.Name
                         where showHidden || cr.Active
                         select cr;
+            
+            #region Multi-Tenant Plugin
+            var _storeMappingService = Nop.Core.Infrastructure.EngineContext.Current.Resolve<Nop.Services.Stores.IStoreMappingService>();
+
+            if (await _storeMappingService.CurrentStore() > 0)
+                query = query.Where(x => x.Name != "Administrators");
+            #endregion
 
             var customerRoles = await _staticCacheManager.GetAsync(key, async () => await query.ToListAsync());
 
@@ -1343,6 +1399,20 @@ namespace Nop.Services.Customers
         public virtual async Task<bool> IsAdminAsync(Customer customer, bool onlyActiveCustomerRoles = true)
         {
             return await IsInCustomerRoleAsync(customer, NopCustomerDefaults.AdministratorsRoleName, onlyActiveCustomerRoles);
+        }
+
+        /// <summary>
+        /// Gets a value indicating whether customer is store administrator
+        /// </summary>
+        /// <param name="customer">Customer</param>
+        /// <param name="onlyActiveCustomerRoles">A value indicating whether we should look only in active customer roles</param>
+        /// <returns>
+        /// A task that represents the asynchronous operation
+        /// The task result contains the result
+        /// </returns>
+        public virtual async Task<bool> IsStoreAdminAsync(Customer customer, bool onlyActiveCustomerRoles = true)
+        {
+            return await IsInCustomerRoleAsync(customer, NopCustomerDefaults.StoreAdministratorsRoleName, onlyActiveCustomerRoles);
         }
 
         /// <summary>

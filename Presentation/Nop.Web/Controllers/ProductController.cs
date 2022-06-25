@@ -176,9 +176,12 @@ namespace Nop.Web.Controllers
                 !_productService.ProductIsAvailable(product);
             //Check whether the current user has a "Manage products" permission (usually a store owner)
             //We should allows him (her) to use "Preview" functionality
+
+            #region Multi-Tenant Plugin
             var hasAdminAccess = await _permissionService.AuthorizeAsync(StandardPermissionProvider.AccessAdminPanel) && await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageProducts);
-            if (notAvailable && !hasAdminAccess)
+            if (notAvailable && !await _storeMappingService.IsAdminStore())
                 return InvokeHttp404();
+            #endregion
 
             //visible individually?
             if (!product.VisibleIndividually)

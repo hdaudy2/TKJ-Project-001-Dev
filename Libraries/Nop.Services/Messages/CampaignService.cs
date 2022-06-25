@@ -102,6 +102,17 @@ namespace Nop.Services.Messages
         /// </returns>
         public virtual async Task<IList<Campaign>> GetAllCampaignsAsync(int storeId = 0)
         {
+            #region Multi-Tenant Plugin
+
+            var _storeMappingService = Nop.Core.Infrastructure.EngineContext.Current.Resolve<Nop.Services.Stores.IStoreMappingService>();
+            //Current Store Admin
+            if (await _storeMappingService.CurrentStore() > 0)
+            {
+                storeId = await _storeMappingService.CurrentStore();
+            }
+
+            #endregion
+
             var campaigns = await _campaignRepository.GetAllAsync(query =>
             {
                 if (storeId > 0) 

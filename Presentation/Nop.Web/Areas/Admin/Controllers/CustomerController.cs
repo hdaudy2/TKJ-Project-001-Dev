@@ -370,6 +370,11 @@ namespace Nop.Web.Areas.Admin.Controllers
 
                 await _customerService.InsertCustomerAsync(customer);
 
+                #region Multi-Tenant Plugin
+                var _storeMappingService = Nop.Core.Infrastructure.EngineContext.Current.Resolve<Nop.Services.Stores.IStoreMappingService>();
+                await _storeMappingService.InsertStoreMappingByEntityAsync(customer.Id, "Stores", (await _storeContext.GetCurrentStoreAsync()).Id);
+
+                #endregion
                 //form fields
                 if (_dateTimeSettings.AllowCustomersToSetTimeZone)
                     await _genericAttributeService.SaveAttributeAsync(customer, NopCustomerDefaults.TimeZoneIdAttribute, model.TimeZoneId);
@@ -408,7 +413,14 @@ namespace Nop.Web.Areas.Admin.Controllers
                 //newsletter subscriptions
                 if (!string.IsNullOrEmpty(customer.Email))
                 {
-                    var allStores = await _storeService.GetAllStoresAsync();
+                    #region Multi-Tenant Plugin
+                    var allStores = await _storeService.GetAllStoresByEntityNameAsync((await _workContext.GetCurrentCustomerAsync()).Id, "Stores");
+                    if (allStores.Count <= 0)
+                    {
+                        allStores = await _storeService.GetAllStoresAsync();
+                    }
+
+                    #endregion
                     foreach (var store in allStores)
                     {
                         var newsletterSubscription = await _newsLetterSubscriptionService
@@ -512,6 +524,13 @@ namespace Nop.Web.Areas.Admin.Controllers
             if (customer == null || customer.Deleted)
                 return RedirectToAction("List");
 
+            #region Multi-Tenant Plugin
+            var _storeMappingService = Nop.Core.Infrastructure.EngineContext.Current.Resolve<Nop.Services.Stores.IStoreMappingService>();
+            if (!await _storeMappingService.AuthorizeCustomer(customer.Id) && !await _storeMappingService.IsAdminStore())
+                return AccessDeniedView();
+
+            #endregion
+
             //prepare model
             var model = await _customerModelFactory.PrepareCustomerModelAsync(null, customer);
 
@@ -529,6 +548,13 @@ namespace Nop.Web.Areas.Admin.Controllers
             var customer = await _customerService.GetCustomerByIdAsync(model.Id);
             if (customer == null || customer.Deleted)
                 return RedirectToAction("List");
+
+            #region Multi-Tenant Plugin
+            var _storeMappingService = Nop.Core.Infrastructure.EngineContext.Current.Resolve<Nop.Services.Stores.IStoreMappingService>();
+            if (!await _storeMappingService.AuthorizeCustomer(customer.Id) && !await _storeMappingService.IsAdminStore())
+                return AccessDeniedView();
+
+            #endregion
 
             //validate customer roles
             var allCustomerRoles = await _customerService.GetAllCustomerRolesAsync(true);
@@ -657,7 +683,15 @@ namespace Nop.Web.Areas.Admin.Controllers
                     //newsletter subscriptions
                     if (!string.IsNullOrEmpty(customer.Email))
                     {
-                        var allStores = await _storeService.GetAllStoresAsync();
+                        #region Multi-Tenant Plugin
+
+                        var allStores = await _storeService.GetAllStoresByEntityNameAsync((await _workContext.GetCurrentCustomerAsync()).Id, "Stores");
+                        if (allStores.Count <= 0)
+                        {
+                            allStores = await _storeService.GetAllStoresAsync();
+                        }
+
+                        #endregion
                         foreach (var store in allStores)
                         {
                             var newsletterSubscription = await _newsLetterSubscriptionService
@@ -778,6 +812,13 @@ namespace Nop.Web.Areas.Admin.Controllers
             if (customer == null)
                 return RedirectToAction("List");
 
+            #region Multi-Tenant Plugin
+            var _storeMappingService = Nop.Core.Infrastructure.EngineContext.Current.Resolve<Nop.Services.Stores.IStoreMappingService>();
+            if (!await _storeMappingService.AuthorizeCustomer(customer.Id) && !await _storeMappingService.IsAdminStore())
+                return AccessDeniedView();
+
+            #endregion
+
             //ensure that the current customer cannot change passwords of "Administrators" if he's not an admin himself
             if (await _customerService.IsAdminAsync(customer) && !await _customerService.IsAdminAsync(await _workContext.GetCurrentCustomerAsync()))
             {
@@ -812,6 +853,13 @@ namespace Nop.Web.Areas.Admin.Controllers
             if (customer == null)
                 return RedirectToAction("List");
 
+            #region Multi-Tenant Plugin
+            var _storeMappingService = Nop.Core.Infrastructure.EngineContext.Current.Resolve<Nop.Services.Stores.IStoreMappingService>();
+            if (!await _storeMappingService.AuthorizeCustomer(customer.Id) && !await _storeMappingService.IsAdminStore())
+                return AccessDeniedView();
+
+            #endregion
+
             await _genericAttributeService.SaveAttributeAsync(customer,
                 NopCustomerDefaults.VatNumberStatusIdAttribute,
                 (int)VatNumberStatus.Valid);
@@ -831,6 +879,13 @@ namespace Nop.Web.Areas.Admin.Controllers
             if (customer == null)
                 return RedirectToAction("List");
 
+            #region Multi-Tenant Plugin
+            var _storeMappingService = Nop.Core.Infrastructure.EngineContext.Current.Resolve<Nop.Services.Stores.IStoreMappingService>();
+            if (!await _storeMappingService.AuthorizeCustomer(customer.Id) && !await _storeMappingService.IsAdminStore())
+                return AccessDeniedView();
+
+            #endregion
+
             await _genericAttributeService.SaveAttributeAsync(customer,
                 NopCustomerDefaults.VatNumberStatusIdAttribute,
                 (int)VatNumberStatus.Invalid);
@@ -849,6 +904,13 @@ namespace Nop.Web.Areas.Admin.Controllers
             var customer = await _customerService.GetCustomerByIdAsync(model.Id);
             if (customer == null)
                 return RedirectToAction("List");
+
+            #region Multi-Tenant Plugin
+            var _storeMappingService = Nop.Core.Infrastructure.EngineContext.Current.Resolve<Nop.Services.Stores.IStoreMappingService>();
+            if (!await _storeMappingService.AuthorizeCustomer(customer.Id) && !await _storeMappingService.IsAdminStore())
+                return AccessDeniedView();
+
+            #endregion
 
             customer.AffiliateId = 0;
             await _customerService.UpdateCustomerAsync(customer);
@@ -888,6 +950,18 @@ namespace Nop.Web.Areas.Admin.Controllers
             if (customer == null)
                 return RedirectToAction("List");
 
+            #region Multi-Tenant Plugin
+            var _storeMappingService = Nop.Core.Infrastructure.EngineContext.Current.Resolve<Nop.Services.Stores.IStoreMappingService>();
+            if (!await _storeMappingService.AuthorizeCustomer(customer.Id) && !await _storeMappingService.IsAdminStore())
+            {
+                return AccessDeniedView();
+            }
+            if ((await _workContext.GetCurrentCustomerAsync()).Id == customer.Id && !await _storeMappingService.IsAdminStore())
+            {
+                return AccessDeniedView();
+            }
+            #endregion
+
             try
             {
                 //prevent attempts to delete the user, if it is the last active administrator
@@ -906,9 +980,17 @@ namespace Nop.Web.Areas.Admin.Controllers
 
                 //delete
                 await _customerService.DeleteCustomerAsync(customer);
+                
+                #region Multi-Tenant Plugin
+                var allStores = await _storeService.GetAllStoresByEntityNameAsync((await _workContext.GetCurrentCustomerAsync()).Id, "Stores");
+                if (allStores.Count <= 0)
+                {
+                    allStores = await _storeService.GetAllStoresAsync();
+                }
 
+                #endregion
                 //remove newsletter subscription (if exists)
-                foreach (var store in await _storeService.GetAllStoresAsync())
+                foreach (var store in allStores)
                 {
                     var subscription = await _newsLetterSubscriptionService.GetNewsLetterSubscriptionByEmailAndStoreIdAsync(customer.Email, store.Id);
                     if (subscription != null)
@@ -941,6 +1023,13 @@ namespace Nop.Web.Areas.Admin.Controllers
             var customer = await _customerService.GetCustomerByIdAsync(id);
             if (customer == null)
                 return RedirectToAction("List");
+
+            #region Multi-Tenant Plugin
+            var _storeMappingService = Nop.Core.Infrastructure.EngineContext.Current.Resolve<Nop.Services.Stores.IStoreMappingService>();
+            if (!await _storeMappingService.AuthorizeCustomer(customer.Id) && !await _storeMappingService.IsAdminStore())
+                return AccessDeniedView();
+
+            #endregion
 
             if (!customer.Active)
             {
@@ -984,6 +1073,14 @@ namespace Nop.Web.Areas.Admin.Controllers
             if (customer == null)
                 return RedirectToAction("List");
 
+            #region Multi-Tenant Plugin
+
+            var _storeMappingService = Nop.Core.Infrastructure.EngineContext.Current.Resolve<Nop.Services.Stores.IStoreMappingService>();
+            if (!await _storeMappingService.AuthorizeCustomer(customer.Id) && !await _storeMappingService.IsAdminStore())
+                return AccessDeniedView();
+
+            #endregion
+
             await _workflowMessageService.SendCustomerWelcomeMessageAsync(customer, (await _workContext.GetWorkingLanguageAsync()).Id);
 
             _notificationService.SuccessNotification(await _localizationService.GetResourceAsync("Admin.Customers.Customers.SendWelcomeMessage.Success"));
@@ -1003,6 +1100,13 @@ namespace Nop.Web.Areas.Admin.Controllers
             if (customer == null)
                 return RedirectToAction("List");
 
+            #region Multi-Tenant Plugin
+            var _storeMappingService = Nop.Core.Infrastructure.EngineContext.Current.Resolve<Nop.Services.Stores.IStoreMappingService>();
+            if (!await _storeMappingService.AuthorizeCustomer(customer.Id) && !await _storeMappingService.IsAdminStore())
+                return AccessDeniedView();
+
+            #endregion
+
             //email validation message
             await _genericAttributeService.SaveAttributeAsync(customer, NopCustomerDefaults.AccountActivationTokenAttribute, Guid.NewGuid().ToString());
             await _workflowMessageService.SendCustomerEmailValidationMessageAsync(customer, (await _workContext.GetWorkingLanguageAsync()).Id);
@@ -1021,6 +1125,13 @@ namespace Nop.Web.Areas.Admin.Controllers
             var customer = await _customerService.GetCustomerByIdAsync(model.Id);
             if (customer == null)
                 return RedirectToAction("List");
+            
+            #region Multi-Tenant Plugin
+            var _storeMappingService = Nop.Core.Infrastructure.EngineContext.Current.Resolve<Nop.Services.Stores.IStoreMappingService>();
+            if (!await _storeMappingService.AuthorizeCustomer(customer.Id) && !await _storeMappingService.IsAdminStore())
+                return AccessDeniedView();
+
+            #endregion
 
             try
             {
@@ -1074,6 +1185,13 @@ namespace Nop.Web.Areas.Admin.Controllers
             if (customer == null)
                 return RedirectToAction("List");
 
+            #region Multi-Tenant Plugin
+            var _storeMappingService = Nop.Core.Infrastructure.EngineContext.Current.Resolve<Nop.Services.Stores.IStoreMappingService>();
+            if (!await _storeMappingService.AuthorizeCustomer(customer.Id) && !await _storeMappingService.IsAdminStore())
+                return AccessDeniedView();
+
+            #endregion
+
             try
             {
                 if (!_forumSettings.AllowPrivateMessages)
@@ -1126,6 +1244,13 @@ namespace Nop.Web.Areas.Admin.Controllers
             var customer = await _customerService.GetCustomerByIdAsync(searchModel.CustomerId)
                 ?? throw new ArgumentException("No customer found with the specified id");
 
+            #region Multi-Tenant Plugin
+            var _storeMappingService = Nop.Core.Infrastructure.EngineContext.Current.Resolve<Nop.Services.Stores.IStoreMappingService>();
+            if (!await _storeMappingService.AuthorizeCustomer(customer.Id) && !await _storeMappingService.IsAdminStore())
+                return await AccessDeniedDataTablesJson();
+
+            #endregion
+
             //prepare model
             var model = await _customerModelFactory.PrepareRewardPointsListModelAsync(searchModel, customer);
 
@@ -1145,6 +1270,13 @@ namespace Nop.Web.Areas.Admin.Controllers
             var customer = await _customerService.GetCustomerByIdAsync(model.CustomerId);
             if (customer == null)
                 return ErrorJson("Customer cannot be loaded");
+
+            #region Multi-Tenant Plugin
+            var _storeMappingService = Nop.Core.Infrastructure.EngineContext.Current.Resolve<Nop.Services.Stores.IStoreMappingService>();
+            if (!await _storeMappingService.AuthorizeCustomer(customer.Id) && !await _storeMappingService.IsAdminStore())
+                return AccessDeniedView();
+
+            #endregion
 
             //check whether delay is set
             DateTime? activatingDate = null;
@@ -1181,6 +1313,13 @@ namespace Nop.Web.Areas.Admin.Controllers
             var customer = await _customerService.GetCustomerByIdAsync(searchModel.CustomerId)
                 ?? throw new ArgumentException("No customer found with the specified id");
 
+            #region Multi-Tenant Plugin
+            var _storeMappingService = Nop.Core.Infrastructure.EngineContext.Current.Resolve<Nop.Services.Stores.IStoreMappingService>();
+            if (!await _storeMappingService.AuthorizeCustomer(customer.Id) && !await _storeMappingService.IsAdminStore())
+                return await AccessDeniedDataTablesJson();
+
+            #endregion
+
             //prepare model
             var model = await _customerModelFactory.PrepareCustomerAddressListModelAsync(searchModel, customer);
 
@@ -1196,6 +1335,13 @@ namespace Nop.Web.Areas.Admin.Controllers
             //try to get a customer with the specified id
             var customer = await _customerService.GetCustomerByIdAsync(customerId)
                 ?? throw new ArgumentException("No customer found with the specified id", nameof(customerId));
+
+            #region Multi-Tenant Plugin
+            var _storeMappingService = Nop.Core.Infrastructure.EngineContext.Current.Resolve<Nop.Services.Stores.IStoreMappingService>();
+            if (!await _storeMappingService.AuthorizeCustomer(customer.Id) && !await _storeMappingService.IsAdminStore())
+                return AccessDeniedView();
+
+            #endregion
 
             //try to get an address with the specified id
             var address = await _customerService.GetCustomerAddressAsync(customer.Id, id);            
@@ -1222,6 +1368,13 @@ namespace Nop.Web.Areas.Admin.Controllers
             if (customer == null)
                 return RedirectToAction("List");
 
+            #region Multi-Tenant Plugin
+            var _storeMappingService = Nop.Core.Infrastructure.EngineContext.Current.Resolve<Nop.Services.Stores.IStoreMappingService>();
+            if (!await _storeMappingService.AuthorizeCustomer(customer.Id) && !await _storeMappingService.IsAdminStore())
+                return AccessDeniedView();
+
+            #endregion
+
             //prepare model
             var model = await _customerModelFactory.PrepareCustomerAddressModelAsync(new CustomerAddressModel(), customer, null);
 
@@ -1238,6 +1391,13 @@ namespace Nop.Web.Areas.Admin.Controllers
             var customer = await _customerService.GetCustomerByIdAsync(model.CustomerId);
             if (customer == null)
                 return RedirectToAction("List");
+
+            #region Multi-Tenant Plugin
+            var _storeMappingService = Nop.Core.Infrastructure.EngineContext.Current.Resolve<Nop.Services.Stores.IStoreMappingService>();
+            if (!await _storeMappingService.AuthorizeCustomer(customer.Id) && !await _storeMappingService.IsAdminStore())
+                return AccessDeniedView();
+
+            #endregion
 
             //custom address attributes
             var customAttributes = await _addressAttributeParser.ParseCustomAddressAttributesAsync(form);
@@ -1285,6 +1445,13 @@ namespace Nop.Web.Areas.Admin.Controllers
             if (customer == null)
                 return RedirectToAction("List");
 
+            #region Multi-Tenant Plugin
+            var _storeMappingService = Nop.Core.Infrastructure.EngineContext.Current.Resolve<Nop.Services.Stores.IStoreMappingService>();
+            if (!await _storeMappingService.AuthorizeCustomer(customer.Id) && !await _storeMappingService.IsAdminStore())
+                return AccessDeniedView();
+
+            #endregion
+
             //try to get an address with the specified id
             var address = await _addressService.GetAddressByIdAsync(addressId);
             if (address == null)
@@ -1306,6 +1473,13 @@ namespace Nop.Web.Areas.Admin.Controllers
             var customer = await _customerService.GetCustomerByIdAsync(model.CustomerId);
             if (customer == null)
                 return RedirectToAction("List");
+
+            #region Multi-Tenant Plugin
+            var _storeMappingService = Nop.Core.Infrastructure.EngineContext.Current.Resolve<Nop.Services.Stores.IStoreMappingService>();
+            if (!await _storeMappingService.AuthorizeCustomer(customer.Id) && !await _storeMappingService.IsAdminStore())
+                return AccessDeniedView();
+
+            #endregion
 
             //try to get an address with the specified id
             var address = await _addressService.GetAddressByIdAsync(model.Address.Id);
@@ -1351,6 +1525,13 @@ namespace Nop.Web.Areas.Admin.Controllers
             //try to get a customer with the specified id
             var customer = await _customerService.GetCustomerByIdAsync(searchModel.CustomerId)
                 ?? throw new ArgumentException("No customer found with the specified id");
+
+            #region Multi-Tenant Plugin
+            var _storeMappingService = Nop.Core.Infrastructure.EngineContext.Current.Resolve<Nop.Services.Stores.IStoreMappingService>();
+            if (!await _storeMappingService.AuthorizeCustomer(customer.Id) && !await _storeMappingService.IsAdminStore())
+                return await AccessDeniedDataTablesJson();
+
+            #endregion
 
             //prepare model
             var model = await _customerModelFactory.PrepareCustomerOrderListModelAsync(searchModel, customer);
@@ -1460,6 +1641,13 @@ namespace Nop.Web.Areas.Admin.Controllers
             var customer = await _customerService.GetCustomerByIdAsync(searchModel.CustomerId)
                 ?? throw new ArgumentException("No customer found with the specified id");
 
+            #region Multi-Tenant Plugin
+            var _storeMappingService = Nop.Core.Infrastructure.EngineContext.Current.Resolve<Nop.Services.Stores.IStoreMappingService>();
+            if (!await _storeMappingService.AuthorizeCustomer(customer.Id) && !await _storeMappingService.IsAdminStore())
+                return await AccessDeniedDataTablesJson();
+
+            #endregion
+
             //prepare model
             var model = await _customerModelFactory.PrepareCustomerShoppingCartListModelAsync(searchModel, customer);
 
@@ -1480,6 +1668,13 @@ namespace Nop.Web.Areas.Admin.Controllers
             var customer = await _customerService.GetCustomerByIdAsync(searchModel.CustomerId)
                 ?? throw new ArgumentException("No customer found with the specified id");
 
+            #region Multi-Tenant Plugin
+            var _storeMappingService = Nop.Core.Infrastructure.EngineContext.Current.Resolve<Nop.Services.Stores.IStoreMappingService>();
+            if (!await _storeMappingService.AuthorizeCustomer(customer.Id) && !await _storeMappingService.IsAdminStore())
+                return await AccessDeniedDataTablesJson();
+
+            #endregion
+
             //prepare model
             var model = await _customerModelFactory.PrepareCustomerActivityLogListModelAsync(searchModel, customer);
 
@@ -1499,6 +1694,13 @@ namespace Nop.Web.Areas.Admin.Controllers
             //try to get a customer with the specified id
             var customer = await _customerService.GetCustomerByIdAsync(searchModel.CustomerId)
                 ?? throw new ArgumentException("No customer found with the specified id");
+
+            #region Multi-Tenant Plugin
+            var _storeMappingService = Nop.Core.Infrastructure.EngineContext.Current.Resolve<Nop.Services.Stores.IStoreMappingService>();
+            if (!await _storeMappingService.AuthorizeCustomer(customer.Id) && !await _storeMappingService.IsAdminStore())
+                return await AccessDeniedDataTablesJson();
+
+            #endregion
 
             //prepare model
             var model = await _customerModelFactory.PrepareCustomerBackInStockSubscriptionListModelAsync(searchModel, customer);
@@ -1547,6 +1749,13 @@ namespace Nop.Web.Areas.Admin.Controllers
             if (!_gdprSettings.GdprEnabled)
                 return RedirectToAction("List");
 
+            #region Multi-Tenant Plugin
+            var _storeMappingService = Nop.Core.Infrastructure.EngineContext.Current.Resolve<Nop.Services.Stores.IStoreMappingService>();
+            if (!await _storeMappingService.AuthorizeCustomer(customer.Id) && !await _storeMappingService.IsAdminStore())
+                return AccessDeniedView();
+
+            #endregion
+
             try
             {
                 //prevent attempts to delete the user, if it is the last active administrator
@@ -1593,6 +1802,12 @@ namespace Nop.Web.Areas.Admin.Controllers
 
             try
             {
+                #region Multi-Tenant Plugin
+                var _storeMappingService = Nop.Core.Infrastructure.EngineContext.Current.Resolve<Nop.Services.Stores.IStoreMappingService>();
+                if (!await _storeMappingService.AuthorizeCustomer(customer.Id) && !await _storeMappingService.IsAdminStore())
+                    return AccessDeniedView();
+
+                #endregion
                 //log
                 //_gdprService.InsertLog(customer, 0, GdprRequestType.ExportData, await _localizationService.GetResource("Gdpr.Exported"));
                 //export

@@ -42,6 +42,13 @@ namespace Nop.Web.Areas.Admin.Models.Messages
 
         [NopResourceDisplayName("Admin.Configuration.EmailAccounts.Fields.SendTestEmailTo")]
         public string SendTestEmailTo { get; set; }
+        
+        [NopResourceDisplayName("Admin.Configuration.EmailAccounts.Fields.RegisteredInStoreId")]
+        public int RegisteredInStoreId { get; set; }
+        
+        [NopResourceDisplayName("Admin.Configuration.EmailAccounts.Fields.DefaultForStore")]
+        public bool DefaultForStore { get; set; }
+        public string Store { get; set; }
 
         #endregion
     }

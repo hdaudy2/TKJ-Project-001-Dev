@@ -91,9 +91,30 @@ namespace Nop.Services.Stores
             if (query is null)
                 throw new ArgumentNullException(nameof(query));
 
+            #region Multi-Tenant Plugin
+            
+            //Backend storeId = 0
+            //IgnoreStoreLimitations == Ignore "limit per store" rules(Admin/Setting/Catalog)
             if (storeId == 0 || _catalogSettings.IgnoreStoreLimitations || !await IsEntityMappingExistsAsync<TEntity>())
-                return query;
+            {
+                var _workContext = Nop.Core.Infrastructure.EngineContext.Current.Resolve<Core.IWorkContext>();
+                var _storeMappingService = Nop.Core.Infrastructure.EngineContext.Current.Resolve<Nop.Services.Stores.IStoreMappingService>();
+                var currentStoreId = _storeMappingService.GetStoreIdByEntityId((await _workContext.GetCurrentCustomerAsync()).Id, "Stores").FirstOrDefault();
+                if (currentStoreId > 0)
+                {
+                    //Stores Admin
+                    return from entity in query
+                           where !entity.LimitedToStores || _storeMappingRepository.Table.Any(sm =>
+                                 sm.EntityName == typeof(TEntity).Name && sm.EntityId == entity.Id && sm.StoreId == currentStoreId)
+                           select entity;
+                } else {
+                    //Super Admin
+                    return query;
+                }
+            }
+            #endregion
 
+            //Fontend
             return from entity in query
                    where !entity.LimitedToStores || _storeMappingRepository.Table.Any(sm =>
                          sm.EntityName == typeof(TEntity).Name && sm.EntityId == entity.Id && sm.StoreId == storeId)
@@ -244,6 +265,119 @@ namespace Nop.Services.Stores
             return false;
         }
 
+        #endregion
+
+        #region Multi-Tenant Plugin
+
+        public virtual async Task<StoreMapping> GetStoreMappingByIdAsync(int storeMappingId)
+        {
+            return await _storeMappingRepository.GetByIdAsync(storeMappingId, cache => default);
+        }
+
+        public virtual List<int> GetStoreIdByEntityId(int entityId, string entityName)
+        {
+            var query = from sm in _storeMappingRepository.Table
+                        where sm.EntityId == entityId &&
+                        sm.EntityName == entityName
+                        select sm.StoreId;
+
+            return query.Distinct().ToList();
+        }
+        public virtual List<int> GetEntityIdByListStoreId(int[] storeIds, string entityName)
+        {
+            var query = from sm in _storeMappingRepository.Table
+                        where storeIds.Contains(sm.StoreId) &&
+                        sm.EntityName == entityName
+                        select sm.EntityId;
+            
+            return query.Distinct().ToList();
+        }
+        public virtual async Task<IList<StoreMapping>> GetAllStoreMappingAsync(string entityName)
+        {
+            var query = from sm in _storeMappingRepository.Table
+                        where sm.EntityName == "Admin" || sm.EntityName == entityName
+                        orderby sm.StoreId
+                        select sm;
+
+            return await query.Distinct().ToListAsync();
+        }
+        public virtual async Task InsertStoreMappingByEntityAsync(int entityId, string entityName, int storeId)
+        {
+            if (storeId == 0)
+                throw new ArgumentOutOfRangeException("storeId");
+
+            var storeMapping = new StoreMapping()
+            {
+                EntityId = entityId,
+                EntityName = entityName,
+                StoreId = storeId
+            };
+
+            await InsertStoreMappingAsync(storeMapping);
+        }
+        public virtual async Task UpdateStoreMappingAsync(StoreMapping storeMapping)
+        {
+            await _storeMappingRepository.UpdateAsync(storeMapping);
+        }
+        public virtual async Task Insert_Store_MappingAsync(StoreMapping storeMapping)
+        {
+            await _storeMappingRepository.InsertAsync(storeMapping);
+        }
+        public virtual async Task<IPagedList<StoreMapping>> GetAllStoreMappingsAsync(int storeId = 0, int pageIndex = 0, int pageSize = int.MaxValue)
+        {
+            var storeMapping = await _storeMappingRepository.GetAllPagedAsync(query =>
+            {
+                query = query.Where(sm => sm.EntityName == "Stores" || sm.EntityName == "Admin");
+                if (storeId > 0)
+                    query = query.Where(sm => sm.StoreId == storeId);
+
+                return query.OrderBy(_sm => _sm.EntityId).ThenBy(_sm => _sm.Id);
+            }, pageIndex, pageSize);
+
+            return storeMapping;
+        }
+        public virtual async Task<bool> TableEdit(int storeId = 0)
+        {
+            var _workContext = Nop.Core.Infrastructure.EngineContext.Current.Resolve<IWorkContext>();
+            List<int> customerIds = GetStoreIdByEntityId((await _workContext.GetCurrentCustomerAsync()).Id, "Stores");
+
+            if (storeId == customerIds.FirstOrDefault())
+            {
+                return true;
+            }
+
+            if (customerIds.Count <= 0)
+                //return true if no store specified/found
+                return true;
+
+            return false;
+        }
+        public virtual async Task<int> CurrentStore()
+        {
+            var _workContext = Nop.Core.Infrastructure.EngineContext.Current.Resolve<IWorkContext>();
+            List<int> storeIds = GetStoreIdByEntityId((await _workContext.GetCurrentCustomerAsync()).Id, "Stores");
+            return storeIds.Count > 0 ? storeIds.FirstOrDefault() : 0;
+        }
+        public virtual async Task<bool> IsAdminStore()
+        {
+            var _workContext = Nop.Core.Infrastructure.EngineContext.Current.Resolve<IWorkContext>();
+            List<int> storeIds = GetStoreIdByEntityId((await _workContext.GetCurrentCustomerAsync()).Id, "Admin");
+            if (storeIds.Count > 0)
+            {
+                return true;
+            }
+            return false;
+        }
+        public virtual async Task<bool> AuthorizeCustomer(int customerId)
+        {
+            int storeId = GetStoreIdByEntityId(customerId, "Stores").FirstOrDefault();
+            if (storeId == (await _storeContext.GetCurrentStoreAsync()).Id)
+            {
+                return true;
+            }
+
+            return false;
+        }
         #endregion
     }
 }

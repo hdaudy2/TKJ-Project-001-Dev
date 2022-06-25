@@ -657,6 +657,17 @@ namespace Nop.Web.Areas.Admin.Factories
         /// </returns>
         public virtual async Task<CustomerModel> PrepareCustomerModelAsync(CustomerModel model, Customer customer, bool excludeProperties = false)
         {
+            #region Multi-Tenant Plugin
+
+            var _workContext = Nop.Core.Infrastructure.EngineContext.Current.Resolve<Nop.Core.IWorkContext>();
+            var allStores = await _storeService.GetAllStoresByEntityNameAsync((await _workContext.GetCurrentCustomerAsync()).Id, "Stores");
+            if (allStores.Count <= 0)
+            {
+                allStores = await _storeService.GetAllStoresAsync();
+            }
+
+            #endregion
+
             if (customer != null)
             {
                 //fill in model values from the entity
@@ -707,10 +718,14 @@ namespace Nop.Web.Areas.Admin.Factories
                     model.LastIpAddress = customer.LastIpAddress;
                     model.LastVisitedPage = await _genericAttributeService.GetAttributeAsync<string>(customer, NopCustomerDefaults.LastVisitedPageAttribute);
                     model.SelectedCustomerRoleIds = (await _customerService.GetCustomerRoleIdsAsync(customer)).ToList();
-                    model.RegisteredInStore = (await _storeService.GetAllStoresAsync())
-                        .FirstOrDefault(store => store.Id == customer.RegisteredInStoreId)?.Name ?? string.Empty;
+                    model.RegisteredInStore = allStores.FirstOrDefault(store => store.Id == customer.RegisteredInStoreId)?.Name ?? string.Empty;
+                    
+                    #region Multi-Tenant Plugin
+                    
                     model.DisplayRegisteredInStore = model.Id > 0 && !string.IsNullOrEmpty(model.RegisteredInStore) &&
-                        (await _storeService.GetAllStoresAsync()).Select(x => x.Id).Count() > 1;
+                    (await _storeService.GetAllStoresAsync()).Select(x => x.Id).Count() > 1;
+
+                    #endregion
 
                     //prepare model affiliate
                     var affiliate = await _affiliateService.GetAffiliateByIdAsync(customer.AffiliateId);
@@ -723,9 +738,10 @@ namespace Nop.Web.Areas.Admin.Factories
                     //prepare model newsletter subscriptions
                     if (!string.IsNullOrEmpty(customer.Email))
                     {
-                        model.SelectedNewsletterSubscriptionStoreIds = await (await _storeService.GetAllStoresAsync())
-                            .WhereAwait(async store => await _newsLetterSubscriptionService.GetNewsLetterSubscriptionByEmailAndStoreIdAsync(customer.Email, store.Id) != null)
+                        #region Extensions by QuanNH
+                        model.SelectedNewsletterSubscriptionStoreIds = await (allStores).WhereAwait(async store => await _newsLetterSubscriptionService.GetNewsLetterSubscriptionByEmailAndStoreIdAsync(customer.Email, store.Id) != null)
                             .Select(store => store.Id).ToListAsync();
+                        #endregion
                     }
                 }
                 //prepare reward points model
@@ -785,13 +801,15 @@ namespace Nop.Web.Areas.Admin.Factories
             //prepare model customer attributes
             await PrepareCustomerAttributeModelsAsync(model.CustomerAttributes, customer);
 
+            #region Extensions by QuanNH
             //prepare model stores for newsletter subscriptions
-            model.AvailableNewsletterSubscriptionStores = (await _storeService.GetAllStoresAsync()).Select(store => new SelectListItem
+            model.AvailableNewsletterSubscriptionStores = allStores.Select(store => new SelectListItem
             {
                 Value = store.Id.ToString(),
                 Text = store.Name,
                 Selected = model.SelectedNewsletterSubscriptionStoreIds.Contains(store.Id)
             }).ToList();
+            #endregion
 
             //prepare model customer roles
             await _aclSupportedModelFactory.PrepareModelCustomerRolesAsync(model);

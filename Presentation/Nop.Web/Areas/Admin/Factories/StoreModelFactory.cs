@@ -1,11 +1,16 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Nop.Core.Domain.Stores;
 using Nop.Services.Localization;
+using Nop.Services.Shipping;
+using Nop.Services.Shipping.Date;
+using Nop.Services.Shipping.Pickup;
 using Nop.Services.Stores;
 using Nop.Web.Areas.Admin.Infrastructure.Mapper.Extensions;
 using Nop.Web.Areas.Admin.Models.Stores;
+using Nop.Web.Areas.Admin.Models.Shipping;
 using Nop.Web.Framework.Factories;
 using Nop.Web.Framework.Models.Extensions;
 
@@ -22,6 +27,7 @@ namespace Nop.Web.Areas.Admin.Factories
         private readonly ILocalizationService _localizationService;
         private readonly ILocalizedModelFactory _localizedModelFactory;
         private readonly IStoreService _storeService;
+        private readonly IShippingService _shippingService;
 
         #endregion
 
@@ -30,12 +36,14 @@ namespace Nop.Web.Areas.Admin.Factories
         public StoreModelFactory(IBaseAdminModelFactory baseAdminModelFactory,
             ILocalizationService localizationService,
             ILocalizedModelFactory localizedModelFactory,
-            IStoreService storeService)
+            IStoreService storeService,
+            IShippingService shippingService)
         {
             _baseAdminModelFactory = baseAdminModelFactory;
             _localizationService = localizationService;
             _localizedModelFactory = localizedModelFactory;
             _storeService = storeService;
+            _shippingService = shippingService;
         }
 
         #endregion
@@ -120,6 +128,38 @@ namespace Nop.Web.Areas.Admin.Factories
             //prepare localized models
             if (!excludeProperties)
                 model.Locales = await _localizedModelFactory.PrepareLocalizedModelsAsync(localizedModelConfiguration);
+
+            return model;
+        }
+        #endregion
+        
+        #region Store Shipping methods
+        /// <summary>
+        /// Prepare store shipping method restriction model
+        /// </summary>
+        /// <param name="model">Store Shipping method restriction model</param>
+        /// <returns>
+        /// A task that represents the asynchronous operation
+        /// The task result contains the shipping method restriction model
+        /// </returns>
+        public virtual async Task<StoreShippingMethodRestrictionModel> PrepareStoreShippingMethodRestrictionModelAsync(StoreShippingMethodRestrictionModel model)
+        {
+            if (model == null)
+                throw new ArgumentNullException(nameof(model));
+
+            model.AvailableStores = await _storeService.GetAllStoresAsync();
+
+            foreach (var shippingMethod in await _shippingService.GetAllShippingMethodsAsync())
+            {
+                model.AvailableShippingMethods.Add(shippingMethod.ToModel<ShippingMethodModel>());
+                foreach (var store in model.AvailableStores)
+                {
+                    if (!model.Restricted.ContainsKey(store.Id))
+                        model.Restricted[store.Id] = new Dictionary<int, bool>();
+
+                    model.Restricted[store.Id][shippingMethod.Id] = await _storeService.StoreRestrictionExistsAsync(shippingMethod, store.Id);
+                }
+            }
 
             return model;
         }

@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using Nop.Core;
 using Nop.Core.Domain.Messages;
 using Nop.Data;
+using Nop.Services.Stores;
 
 namespace Nop.Services.Messages
 {
@@ -16,14 +17,17 @@ namespace Nop.Services.Messages
         #region Fields
 
         private readonly IRepository<EmailAccount> _emailAccountRepository;
+        private readonly IStoreContext _storeContext;
+
 
         #endregion
 
         #region Ctor
 
-        public EmailAccountService(IRepository<EmailAccount> emailAccountRepository)
+        public EmailAccountService(IRepository<EmailAccount> emailAccountRepository, IStoreContext storeContext)
         {
             _emailAccountRepository = emailAccountRepository;
+            _storeContext = storeContext;
         }
 
         #endregion
@@ -37,6 +41,8 @@ namespace Nop.Services.Messages
         /// <returns>A task that represents the asynchronous operation</returns>
         public virtual async Task InsertEmailAccountAsync(EmailAccount emailAccount)
         {
+            var currentStore = await _storeContext.GetCurrentStoreAsync();
+
             if (emailAccount == null)
                 throw new ArgumentNullException(nameof(emailAccount));
 
@@ -57,6 +63,9 @@ namespace Nop.Services.Messages
             emailAccount.Host = CommonHelper.EnsureMaximumLength(emailAccount.Host, 255);
             emailAccount.Username = CommonHelper.EnsureMaximumLength(emailAccount.Username, 255);
             emailAccount.Password = CommonHelper.EnsureMaximumLength(emailAccount.Password, 255);
+            
+            emailAccount.RegisteredInStoreId = currentStore.Id;
+            emailAccount.DefaultForStore = false;
 
             await _emailAccountRepository.InsertAsync(emailAccount);
         }
@@ -122,6 +131,24 @@ namespace Nop.Services.Messages
         }
 
         /// <summary>
+        /// Gets default email account by Store identifier
+        /// </summary>
+        /// <param name="storeId">Store identifier</param>
+        /// <returns>
+        /// A task that represents the asynchronous operation
+        /// The task result contains the email account
+        /// </returns>
+        public virtual async Task<EmailAccount> GetDefaultEmailAccountByStoreIdAsync(int storeId)
+        {
+            var query = from ea in _emailAccountRepository.Table
+                where ea.RegisteredInStoreId == storeId && ea.DefaultForStore == true
+                orderby ea.Id
+                select ea;
+            
+            return await query.FirstOrDefaultAsync();
+        }
+
+        /// <summary>
         /// Gets all email accounts
         /// </summary>
         /// <returns>
@@ -138,6 +165,28 @@ namespace Nop.Services.Messages
             }, cache => default);
 
             return emailAccounts;
+        }
+
+        /// <summary>
+        /// Gets all email accounts
+        /// </summary>
+        /// <param name="StoreId">Store identifier</param>
+        /// <returns>
+        /// A task that represents the asynchronous operation
+        /// The task result contains the email accounts list
+        /// </returns>
+        public virtual async Task<IList<EmailAccount>> GetAllEmailAccountsAsync(Nullable<int> StoreId)
+        {
+            if (StoreId == null)
+                throw new ArgumentNullException(nameof(StoreId));
+            
+            return await _emailAccountRepository.GetAllAsync(query =>
+            {
+                return from ea in query
+                    where ea.RegisteredInStoreId == StoreId
+                    orderby ea.Id
+                    select ea;
+            });
         }
 
         #endregion

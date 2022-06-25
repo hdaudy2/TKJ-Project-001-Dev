@@ -216,7 +216,10 @@ namespace Nop.Services.ExportImport
                 await xmlWriter.WriteStringAsync("UpdatedOnUtc", category.UpdatedOnUtc, await IgnoreExportCategoryPropertyAsync());
 
                 await xmlWriter.WriteStartElementAsync("Products");
-                var productCategories = await _categoryService.GetProductCategoriesByCategoryIdAsync(category.Id, showHidden: true);
+                #region Multi-Tenant Plugin
+                var productCategories = await _categoryService.GetProductCategoriesByCategoryIdAsync(category.Id, showHidden: false);
+                #endregion
+
                 foreach (var productCategory in productCategories)
                 {
                     var product = await _productService.GetProductByIdAsync(productCategory.ProductId);

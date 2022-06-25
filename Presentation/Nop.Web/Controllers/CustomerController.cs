@@ -18,6 +18,7 @@ using Nop.Core.Domain.Media;
 using Nop.Core.Domain.Messages;
 using Nop.Core.Domain.Security;
 using Nop.Core.Domain.Tax;
+using Nop.Core.Domain.Logging;
 using Nop.Core.Events;
 using Nop.Core.Http;
 using Nop.Core.Http.Extensions;
@@ -152,6 +153,7 @@ namespace Nop.Web.Controllers
             _captchaSettings = captchaSettings;
             _customerSettings = customerSettings;
             _dateTimeSettings = dateTimeSettings;
+            _downloadService = downloadService;
             _forumSettings = forumSettings;
             _gdprSettings = gdprSettings;
             _htmlEncoder = htmlEncoder;
@@ -463,6 +465,20 @@ namespace Nop.Web.Controllers
                             var customer = _customerSettings.UsernamesEnabled
                                 ? await _customerService.GetCustomerByUsernameAsync(customerUserName)
                                 : await _customerService.GetCustomerByEmailAsync(customerEmail);
+                            
+                            #region Multi-Tenant Plugin
+
+                            var _storeMappingService = Nop.Core.Infrastructure.EngineContext.Current.Resolve<Nop.Services.Stores.IStoreMappingService>();
+                            var storesId = _storeMappingService.GetStoreIdByEntityId(customer.Id, "Stores").LastOrDefault();
+
+                            if (storesId > 0 && storesId != (await _storeContext.GetCurrentStoreAsync()).Id)
+                            {
+                                ModelState.AddModelError("", await _localizationService.GetResourceAsync("Account.Login.WrongCredentials.NotRegistered"));
+                                break;
+
+                            }
+
+                            #endregion
 
                             return await _customerRegistrationService.SignInCustomerAsync(customer, returnUrl, model.RememberMe);
                         }
@@ -1022,6 +1038,16 @@ namespace Nop.Web.Controllers
                             return RedirectToRoute("RegisterResult", new { resultId = (int)UserRegistrationType.EmailValidation, returnUrl });
 
                         case UserRegistrationType.AdminApproval:
+                            var _storeMappingService = Nop.Core.Infrastructure.EngineContext.Current.Resolve<Nop.Services.Stores.IStoreMappingService>();
+
+                            var currentStoreId = _storeMappingService.GetStoreIdByEntityId(customer.Id, "Stores").FirstOrDefault();
+                            var currentAdminId = _storeMappingService.GetStoreIdByEntityId(customer.Id, "Admin").FirstOrDefault();
+
+                            if (currentStoreId <= 0 && currentAdminId <= 0)
+                            {
+                                await _storeMappingService.InsertStoreMappingByEntityAsync(customer.Id, "Stores", (await _storeContext.GetCurrentStoreAsync()).Id);
+                            }
+
                             return RedirectToRoute("RegisterResult", new { resultId = (int)UserRegistrationType.AdminApproval, returnUrl });
 
                         case UserRegistrationType.Standard:
@@ -1044,6 +1070,8 @@ namespace Nop.Web.Controllers
                     ModelState.AddModelError("", error);
             }
 
+            await _logger.InsertLogAsync(LogLevel.Error, "Registration ModelStatus invalid", "Invalid ModelStatus on Registration Reloading registration page");
+
             //If we got this far, something failed, redisplay form
             model = await _customerModelFactory.PrepareRegisterModelAsync(model, true, customerAttributesXml);
 
@@ -1056,6 +1084,22 @@ namespace Nop.Web.Controllers
         {
             if (string.IsNullOrEmpty(returnUrl) || !Url.IsLocalUrl(returnUrl))
                 returnUrl = Url.RouteUrl("Homepage");
+            #region Multi-Tenant Plugin
+            var _storeMappingService = Nop.Core.Infrastructure.EngineContext.Current.Resolve<Nop.Services.Stores.IStoreMappingService>();
+            string emailCustomer = (await _workContext.GetCurrentCustomerAsync()).Email;
+            var getCustomer = await _customerService.GetCustomerByEmailAsync(emailCustomer);
+            if (getCustomer != null && resultId != 3)
+            {
+                var currentStoreId = _storeMappingService.GetStoreIdByEntityId(getCustomer.Id, "Stores").FirstOrDefault();
+                var currentAdminId = _storeMappingService.GetStoreIdByEntityId(getCustomer.Id, "Admin").FirstOrDefault();
+
+                if (currentStoreId <= 0 && currentAdminId <= 0)
+                {
+                    await _storeMappingService.InsertStoreMappingByEntityAsync(getCustomer.Id, "Stores", (await _storeContext.GetCurrentStoreAsync()).Id);
+                }
+            }
+
+            #endregion
 
             var model = await _customerModelFactory.PrepareRegisterResultModelAsync(resultId, returnUrl);
             return View(model);

@@ -946,6 +946,10 @@ namespace Nop.Web.Areas.Admin.Factories
             //prepare model stores
             await _storeMappingSupportedModelFactory.PrepareModelStoresAsync(model, product, excludeProperties);
 
+            #region Multi-Tenant Plugin
+            await PrepareStoresMappingModelAsync(model, product, excludeProperties);
+            #endregion
+
             var productTags = await _productTagService.GetAllProductTagsAsync();
             var productTagsSb = new StringBuilder();
             productTagsSb.Append("var initialProductTags = [");
@@ -1660,10 +1664,21 @@ namespace Nop.Web.Areas.Admin.Factories
             if (searchModel == null)
                 throw new ArgumentNullException(nameof(searchModel));
 
+            #region Multi-Tenant Plugin
+            var storeId = 0;
+            var _storeMappingService = Nop.Core.Infrastructure.EngineContext.Current.Resolve<Nop.Services.Stores.IStoreMappingService>();
+            var currentStoreId = _storeMappingService.GetStoreIdByEntityId((await _workContext.GetCurrentCustomerAsync()).Id, "Stores").FirstOrDefault();
+            if (currentStoreId > 0)
+            {
+                storeId = currentStoreId;
+            }
+
             //get product tags
             var productTags = (await (await _productTagService.GetAllProductTagsAsync(tagName: searchModel.SearchTagName))
-                .OrderByDescendingAwait(async tag => await _productTagService.GetProductCountByProductTagIdAsync(tag.Id, storeId: 0, showHidden: true)).ToListAsync())
+                .OrderByDescendingAwait(async tag => await _productTagService.GetProductCountByProductTagIdAsync(tag.Id, storeId: storeId, showHidden: true)).ToListAsync())
                 .ToPagedList(searchModel);
+
+            #endregion
 
             //prepare list model
             var model = await new ProductTagListModel().PrepareToGridAsync(searchModel, productTags, () =>
@@ -1697,6 +1712,16 @@ namespace Nop.Web.Areas.Admin.Factories
         {
             Func<ProductTagLocalizedModel, int, Task> localizedModelConfiguration = null;
 
+            #region Multi-Tenant Plugin
+            var storeId = 0;
+            var _storeMappingService = Nop.Core.Infrastructure.EngineContext.Current.Resolve<Nop.Services.Stores.IStoreMappingService>();
+            var currentStoreId = _storeMappingService.GetStoreIdByEntityId((await _workContext.GetCurrentCustomerAsync()).Id, "Stores").FirstOrDefault();
+            if (currentStoreId > 0)
+            {
+                storeId = currentStoreId;
+            }
+            #endregion
+
             if (productTag != null)
             {
                 //fill in model values from the entity
@@ -1705,7 +1730,9 @@ namespace Nop.Web.Areas.Admin.Factories
                     model = productTag.ToModel<ProductTagModel>();
                 }
 
-                model.ProductCount = await _productTagService.GetProductCountByProductTagIdAsync(productTag.Id, storeId: 0, showHidden: true);
+                #region Multi-Tenant Plugin
+                model.ProductCount = await _productTagService.GetProductCountByProductTagIdAsync(productTag.Id, storeId: storeId, showHidden: true);
+                #endregion
 
                 //define localized model configuration action
                 localizedModelConfiguration = async (locale, languageId) =>
@@ -1794,6 +1821,62 @@ namespace Nop.Web.Areas.Admin.Factories
             var tierPrices = (await _productService.GetTierPricesByProductAsync(product.Id))
                 .OrderBy(price => price.StoreId).ThenBy(price => price.Quantity).ThenBy(price => price.CustomerRoleId)
                 .ToList().ToPagedList(searchModel);
+
+            //prepare grid model
+            var model = await new TierPriceListModel().PrepareToGridAsync(searchModel, tierPrices, () =>
+            {
+                return tierPrices.SelectAwait(async price =>
+                {
+                    //fill in model values from the entity
+                    var tierPriceModel = price.ToModel<TierPriceModel>();
+
+                    //fill in additional values (not existing in the entity)   
+                    tierPriceModel.Store = price.StoreId > 0
+                        ? ((await _storeService.GetStoreByIdAsync(price.StoreId))?.Name ?? "Deleted")
+                        : await _localizationService.GetResourceAsync("Admin.Catalog.Products.TierPrices.Fields.Store.All");
+                    tierPriceModel.CustomerRoleId = price.CustomerRoleId ?? 0;
+                    tierPriceModel.CustomerRole = price.CustomerRoleId.HasValue
+                        ? (await _customerService.GetCustomerRoleByIdAsync(price.CustomerRoleId.Value))?.Name
+                        : await _localizationService.GetResourceAsync("Admin.Catalog.Products.TierPrices.Fields.CustomerRole.All");
+
+                    return tierPriceModel;
+                });
+            });
+
+            return model;
+        }
+
+        /// <summary>
+        /// Prepare paged tier price list model
+        /// </summary>
+        /// <param name="searchModel">Tier price search model</param>
+        /// <param name="product">Product</param>
+        /// <param name="storeId">Product</param>
+        /// <returns>
+        /// A task that represents the asynchronous operation
+        /// The task result contains the ier price list model
+        /// </returns>
+        public virtual async Task<TierPriceListModel> PrepareTierPriceListModelForDistributionsAsync(TierPriceSearchModel searchModel, Product product, int storeId)
+        {
+            if (searchModel == null)
+                throw new ArgumentNullException(nameof(searchModel));
+
+            if (product == null)
+                throw new ArgumentNullException(nameof(product));
+
+            //get tier prices
+            var tierPrices = new List<TierPrice>().ToPagedList(searchModel); 
+            
+            if(storeId == 0){
+                tierPrices = (await _productService.GetTierPricesByProductAsync(product.Id))
+                    .OrderBy(price => price.StoreId).ThenBy(price => price.Quantity).ThenBy(price => price.CustomerRoleId)
+                    .ToList().ToPagedList(searchModel);
+            }
+            if(storeId > 0){
+                tierPrices = (await _productService.GetTierPricesByProductAndStoreAsync(product.Id, storeId))
+                    .OrderBy(price => price.StoreId).ThenBy(price => price.Quantity).ThenBy(price => price.CustomerRoleId)
+                    .ToList().ToPagedList(searchModel);
+            }
 
             //prepare grid model
             var model = await new TierPriceListModel().PrepareToGridAsync(searchModel, tierPrices, () =>
@@ -2413,6 +2496,34 @@ namespace Nop.Web.Areas.Admin.Factories
             return model;
         }
 
+        #endregion
+
+        #region Multi-Tenant Plugin
+        public virtual async Task PrepareStoresMappingModelAsync(ProductModel model, Product product, bool excludeProperties)
+        {
+            if (model == null)
+                throw new ArgumentNullException(nameof(model));
+
+            var _storeMappingService = Nop.Core.Infrastructure.EngineContext.Current.Resolve<Nop.Services.Stores.IStoreMappingService>();
+            var _workContext = Nop.Core.Infrastructure.EngineContext.Current.Resolve<Core.IWorkContext>();
+            List<int> storeId = _storeMappingService.GetStoreIdByEntityId((await _workContext.GetCurrentCustomerAsync()).Id, "Stores");
+
+            if (!excludeProperties)
+            {
+                if (product != null)
+                {
+                    model.SelectedStoreIds = (await _storeMappingService.GetStoresIdsWithAccessAsync(product)).ToList();
+                }
+                else
+                {
+                    if (storeId.Count > 0) model.SelectedStoreIds = storeId;
+                }
+
+                if (storeId.Count <= 0)
+                    model.LimitedToStores = false;
+                else model.LimitedToStores = true;
+            }
+        }
         #endregion
     }
 }

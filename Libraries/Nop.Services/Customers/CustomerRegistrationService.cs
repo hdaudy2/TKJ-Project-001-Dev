@@ -496,9 +496,20 @@ namespace Nop.Services.Customers
 
                 if (string.IsNullOrEmpty(oldEmail) || oldEmail.Equals(newEmail, StringComparison.InvariantCultureIgnoreCase))
                     return;
+                
+                #region Multi-Tenant Plugin
+
+                //stores
+                var _workContext = Nop.Core.Infrastructure.EngineContext.Current.Resolve<Nop.Core.IWorkContext>();
+                var allStores = await _storeService.GetAllStoresByEntityNameAsync((await _workContext.GetCurrentCustomerAsync()).Id, "Stores");
+                if (allStores.Count <= 0)
+                {
+                    allStores = await _storeService.GetAllStoresAsync();
+                }
+                #endregion
 
                 //update newsletter subscription (if required)
-                foreach (var store in await _storeService.GetAllStoresAsync())
+                foreach (var store in allStores)
                 {
                     var subscriptionOld = await _newsLetterSubscriptionService.GetNewsLetterSubscriptionByEmailAndStoreIdAsync(oldEmail, store.Id);
 

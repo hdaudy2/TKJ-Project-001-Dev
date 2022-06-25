@@ -574,8 +574,24 @@ namespace Nop.Services.ExportImport
         /// <returns>A task that represents the asynchronous operation</returns>
         protected virtual async Task SaveCategoryAsync(bool isNew, Category category, Dictionary<string, ValueTask<Category>> allCategories, string curentCategoryBreadCrumb, bool setSeName, string seName)
         {
-            if (isNew)
+            #region Multi-Tenant Plugin
+            var _storeMappingService = Nop.Core.Infrastructure.EngineContext.Current.Resolve<Nop.Services.Stores.IStoreMappingService>();
+            #endregion
+
+            if (isNew){
+                #region Multi-Tenant Plugin
+                category.LimitedToStores = true;
+                #endregion
+                
                 await _categoryService.InsertCategoryAsync(category);
+                
+                #region Multi-Tenant Plugin
+                if (await _storeMappingService.CurrentStore() > 0)
+                {
+                    await _storeMappingService.InsertStoreMappingAsync(category, await _storeMappingService.CurrentStore());
+                }
+                #endregion
+            }
             else
                 await _categoryService.UpdateCategoryAsync(category);
 
@@ -1233,11 +1249,22 @@ namespace Nop.Services.ExportImport
             //performance optimization, load all categories IDs for products in one SQL request
             var allProductsCategoryIds = await _categoryService.GetProductCategoryIdsAsync(allProductsBySku.Select(p => p.Id).ToArray());
 
+            #region Multi-Tenant Plugin
+            var _currentStoreId = 0;
+            var currentStoreId = _storeMappingService.GetStoreIdByEntityId((await _workContext.GetCurrentCustomerAsync()).Id, "Stores").FirstOrDefault();
+            if (currentStoreId > 0)
+            {
+                _currentStoreId = currentStoreId;
+            }
+            #endregion
+
             //performance optimization, load all categories in one SQL request
             Dictionary<CategoryKey, Category> allCategories;
             try
             {
-                var allCategoryList = await _categoryService.GetAllCategoriesAsync(showHidden: true);
+                #region Multi-Tenant Plugin
+                var allCategoryList = await _categoryService.GetAllCategoriesAsync(storeId: _currentStoreId, showHidden: true);
+                #endregion
 
                 allCategories = await allCategoryList
                     .ToDictionaryAwaitAsync(async c => await CategoryKey.CreateCategoryKeyAsync(c, _categoryService, allCategoryList, _storeMappingService), c => new ValueTask<Category>(c));
@@ -1252,10 +1279,21 @@ namespace Nop.Services.ExportImport
             var allProductsManufacturerIds = await _manufacturerService.GetProductManufacturerIdsAsync(allProductsBySku.Select(p => p.Id).ToArray());
 
             //performance optimization, load all manufacturers in one SQL request
-            var allManufacturers = await _manufacturerService.GetAllManufacturersAsync(showHidden: true);
+            #region Multi-Tenant Plugin
+            var allManufacturers = await _manufacturerService.GetAllManufacturersAsync(storeId: _currentStoreId, showHidden: true);
+            #endregion
 
             //performance optimization, load all stores in one SQL request
-            var allStores = await _storeService.GetAllStoresAsync();
+            #region Multi-Tenant Plugin
+
+            //stores
+            var allStores = await _storeService.GetAllStoresByEntityNameAsync((await _workContext.GetCurrentCustomerAsync()).Id, "Stores");
+            if (allStores.Count <= 0)
+            {
+                allStores = await _storeService.GetAllStoresAsync();
+            }
+
+            #endregion
 
             //product to import images
             var productPictureMetadata = new List<ProductPictureMetadata>();
@@ -1304,6 +1342,14 @@ namespace Nop.Services.ExportImport
                 var isNew = product == null;
 
                 product ??= new Product();
+
+                #region Multi-Tenant Plugin
+                var _storeMappingService = Nop.Core.Infrastructure.EngineContext.Current.Resolve<Nop.Services.Stores.IStoreMappingService>();
+                if (product != null && !await _storeMappingService.AuthorizeAsync(product) && !await _storeMappingService.IsAdminStore())
+                {
+                    return;
+                }
+                #endregion
 
                 //some of previous values
                 var previousStockQuantity = product.StockQuantity;
@@ -1606,8 +1652,20 @@ namespace Nop.Services.ExportImport
 
                 product.UpdatedOnUtc = DateTime.UtcNow;
 
-                if (isNew)
+                if (isNew){
+                    #region Multi-Tenant Plugin
+                    product.LimitedToStores = true;
+                    #endregion
+                    
                     await _productService.InsertProductAsync(product);
+                    
+                    #region Multi-Tenant Plugin
+                    if (await _storeMappingService.CurrentStore() > 0)
+                    {
+                        await _storeMappingService.InsertStoreMappingAsync(product, await _storeMappingService.CurrentStore());
+                    }
+                    #endregion
+                }
                 else
                     await _productService.UpdateProductAsync(product);
 
@@ -1990,6 +2048,15 @@ namespace Nop.Services.ExportImport
 
                 manufacturer ??= new Manufacturer();
 
+                #region Multi-Tenant Plugin
+
+                var _storeMappingService = Nop.Core.Infrastructure.EngineContext.Current.Resolve<Nop.Services.Stores.IStoreMappingService>();
+                if (manufacturer != null && !await _storeMappingService.AuthorizeAsync(manufacturer) && !await _storeMappingService.IsAdminStore())
+                {
+                    return;
+                }
+                #endregion
+
                 if (isNew)
                 {
                     manufacturer.CreatedOnUtc = DateTime.UtcNow;
@@ -2067,8 +2134,20 @@ namespace Nop.Services.ExportImport
 
                 manufacturer.UpdatedOnUtc = DateTime.UtcNow;
 
-                if (isNew)
+                if (isNew){
+                    #region Multi-Tenant Plugin
+                    manufacturer.LimitedToStores = true;
+                    #endregion
+                    
                     await _manufacturerService.InsertManufacturerAsync(manufacturer);
+                    
+                    #region Multi-Tenant Plugin
+                    if (await _storeMappingService.CurrentStore() > 0)
+                    {
+                        await _storeMappingService.InsertStoreMappingAsync(manufacturer, await _storeMappingService.CurrentStore());
+                    }
+                    #endregion
+                }
                 else
                     await _manufacturerService.UpdateManufacturerAsync(manufacturer);
 
@@ -2127,6 +2206,14 @@ namespace Nop.Services.ExportImport
 
                 //update category by data in xlsx file
                 var (seName, isParentCategoryExists) = await UpdateCategoryByXlsxAsync(category, manager, allCategories, isNew);
+
+                #region Multi-Tenant Plugin
+                var _storeMappingService = Nop.Core.Infrastructure.EngineContext.Current.Resolve<Nop.Services.Stores.IStoreMappingService>();
+                if (category != null && !await _storeMappingService.AuthorizeAsync(category) && !await _storeMappingService.IsAdminStore())
+                {
+                    return;
+                }
+                #endregion
 
                 if (isParentCategoryExists)
                 {

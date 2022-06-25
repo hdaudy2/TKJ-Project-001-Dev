@@ -257,6 +257,19 @@ namespace Nop.Web.Areas.Admin.Factories
             Product product, TierPrice tierPrice, bool excludeProperties = false);
 
         /// <summary>
+        /// Prepare paged tier price list model
+        /// </summary>
+        /// <param name="searchModel">Tier price search model</param>
+        /// <param name="product">Product</param>
+        /// <param name="storeId">Product</param>
+        /// <returns>
+        /// A task that represents the asynchronous operation
+        /// The task result contains the ier price list model
+        /// </returns>
+        Task<TierPriceListModel> PrepareTierPriceListModelForDistributionsAsync(TierPriceSearchModel searchModel, 
+            Product product, int storeId);
+
+        /// <summary>
         /// Prepare paged stock quantity history list model
         /// </summary>
         /// <param name="searchModel">Stock quantity history search model</param>

@@ -1,6 +1,8 @@
 ﻿using System.Collections.Generic;
 using System.Threading.Tasks;
 using Nop.Core.Domain.Stores;
+using Nop.Core.Domain.Shipping;
+using Nop.Services.Shipping.Pickup;
 
 namespace Nop.Services.Stores
 {
@@ -66,5 +68,68 @@ namespace Nop.Services.Stores
         /// The task result contains the list of names and/or IDs not existing stores
         /// </returns>
         Task<string[]> GetNotExistingStoresAsync(string[] storeIdsNames);
+
+        #region Store Shipping methods
+        /// <summary>
+        /// Does store restriction exist
+        /// </summary>
+        /// <param name="shippingMethod">Shipping method</param>
+        /// <param name="storeId">Store identifier</param>
+        /// <returns>
+        /// A task that represents the asynchronous operation
+        /// The task result contains the result
+        /// </returns>
+        Task<bool> StoreRestrictionExistsAsync(ShippingMethod shippingMethod, int storeId);
+
+        /// <summary>
+        /// Gets all StoreShippingMethod
+        /// </summary>
+        /// <returns>
+        /// A task that represents the asynchronous operation
+        /// The task result contains the stores
+        /// </returns>
+        Task<IList<StoreShippingMethod>> GetAllStoreShippingMethodAsync();
+
+        /// <summary>
+        /// Gets all StoreShippingMethod
+        /// </summary>
+        /// <param name="storeId">Store identifier</param>
+        /// <returns>
+        /// A task that represents the asynchronous operation
+        /// The task result contains the stores
+        /// </returns>
+        Task<IList<StoreShippingMethod>> GetAllStoreShippingMethodByStoreIdAsync(int storeId);
+        
+
+        /// <summary>
+        /// Gets store shipping method mappings
+        /// </summary>
+        /// <param name="shippingMethodId">The shipping method identifier</param>
+        /// <param name="storeId">Store identifier</param>
+        /// <returns>
+        /// A task that represents the asynchronous operation
+        /// The task result contains the shipping country mappings
+        /// </returns>
+        Task<IList<StoreShippingMethod>> GetStoreShippingMethodAsync(int shippingMethodId, int storeId);
+
+        /// <summary>
+        /// Inserts a store shipping method mapping
+        /// </summary>
+        /// <param name="StoreShippingMethod">Shipping country mapping</param>
+        /// <returns>A task that represents the asynchronous operation</returns>
+        Task InsertStoreShippingMethodAsync(StoreShippingMethod StoreShippingMethod);
+
+        /// <summary>
+        /// Delete the store shipping method mapping
+        /// </summary>
+        /// <param name="StoreShippingMethod">Shipping country mapping</param>
+        /// <returns>A task that represents the asynchronous operation</returns>
+        Task DeleteStoreShippingMethodAsync(StoreShippingMethod StoreShippingMethod);
+        #endregion
+        
+        #region Extensions by QuanNH
+        Task<IList<Store>> GetStoreNameByIdAsync(int[] storeId);
+        Task<IList<Store>> GetAllStoresByEntityNameAsync(int entityId, string entityName);
+        #endregion
     }
 }

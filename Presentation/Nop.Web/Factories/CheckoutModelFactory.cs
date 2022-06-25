@@ -50,6 +50,7 @@ namespace Nop.Web.Factories
         private readonly IShoppingCartService _shoppingCartService;
         private readonly IStateProvinceService _stateProvinceService;
         private readonly IStoreContext _storeContext;
+        private readonly IStoreService _storeService;
         private readonly IStoreMappingService _storeMappingService;
         private readonly ITaxService _taxService;
         private readonly IWorkContext _workContext;
@@ -83,6 +84,7 @@ namespace Nop.Web.Factories
             IShoppingCartService shoppingCartService,
             IStateProvinceService stateProvinceService,
             IStoreContext storeContext,
+            IStoreService storeService,
             IStoreMappingService storeMappingService,
             ITaxService taxService,
             IWorkContext workContext,
@@ -112,6 +114,7 @@ namespace Nop.Web.Factories
             _shoppingCartService = shoppingCartService;
             _stateProvinceService = stateProvinceService;
             _storeContext = storeContext;
+            _storeService = storeService;
             _storeMappingService = storeMappingService;
             _taxService = taxService;
             _workContext = workContext;
@@ -381,6 +384,15 @@ namespace Nop.Web.Factories
                                                        NopCustomerDefaults.OfferedShippingOptionsAttribute,
                                                        getShippingOptionResponse.ShippingOptions,
                                                        store.Id);
+                
+                var availableShippingMethodID = await _storeService.GetAllStoreShippingMethodByStoreIdAsync((await _storeContext.GetCurrentStoreAsync()).Id);
+
+                List<ShippingMethod> availableShippingMethod = new List<ShippingMethod>();
+            
+                foreach (var item in availableShippingMethodID)
+                {
+                    availableShippingMethod.Add(await _shippingService.GetShippingMethodByIdAsync(item.ShippingMethodId));
+                }
 
                 foreach (var shippingOption in getShippingOptionResponse.ShippingOptions)
                 {
@@ -400,7 +412,13 @@ namespace Nop.Web.Factories
                     var rate = await _currencyService.ConvertFromPrimaryStoreCurrencyAsync(rateBase, await _workContext.GetWorkingCurrencyAsync());
                     soModel.Fee = await _priceFormatter.FormatShippingPriceAsync(rate, true);
                     soModel.Rate = rate;
-                    model.ShippingMethods.Add(soModel);
+                    
+                    var shippingMethodName = soModel.ShippingOption.Name;
+                    var found = availableShippingMethod.FirstOrDefault(so => so.Name == shippingMethodName);
+                    
+                    if(found != null){
+                        model.ShippingMethods.Add(soModel);
+                    }
                 }
 
                 //sort shipping methods

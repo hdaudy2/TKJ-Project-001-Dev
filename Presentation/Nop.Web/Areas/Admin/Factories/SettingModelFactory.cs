@@ -1294,6 +1294,7 @@ namespace Nop.Web.Areas.Admin.Factories
             model.PurchasesPointsValidity_OverrideForStore = await _settingService.SettingExistsAsync(rewardPointsSettings, x => x.PurchasesPointsValidity, storeId);
             model.ActivationDelay_OverrideForStore = await _settingService.SettingExistsAsync(rewardPointsSettings, x => x.ActivationDelay, storeId);
             model.DisplayHowMuchWillBeEarned_OverrideForStore = await _settingService.SettingExistsAsync(rewardPointsSettings, x => x.DisplayHowMuchWillBeEarned, storeId);
+            model.PointsForRegistration_OverrideForStore = await _settingService.SettingExistsAsync(rewardPointsSettings, x => x.PointsForRegistration, storeId);
             model.PageSize_OverrideForStore = await _settingService.SettingExistsAsync(rewardPointsSettings, x => x.PageSize, storeId);
 
             return model;
@@ -1757,11 +1758,20 @@ namespace Nop.Web.Areas.Admin.Factories
         /// </returns>
         public virtual async Task<StoreScopeConfigurationModel> PrepareStoreScopeConfigurationModelAsync()
         {
+            #region Multi-Tenant Plugin
+            //stores
+            var allStores = await _storeService.GetAllStoresByEntityNameAsync((await _workContext.GetCurrentCustomerAsync()).Id, "Stores");
+            if (allStores.Count <= 0)
+            {
+                allStores = await _storeService.GetAllStoresAsync();
+            }
+
             var model = new StoreScopeConfigurationModel
             {
-                Stores = (await _storeService.GetAllStoresAsync()).Select(store => store.ToModel<StoreModel>()).ToList(),
+                Stores = allStores.Select(store => store.ToModel<StoreModel>()).ToList(),
                 StoreId = await _storeContext.GetActiveStoreScopeConfigurationAsync()
             };
+            #endregion
 
             return model;
         }

@@ -40,17 +40,22 @@
             <div class="card card-default">
                 <div class="card-body">
                     <div id="email-accounts-area">
-                        <nop-doc-reference asp-string-resource="@T("Admin.Documentation.Reference.EmailAccounts", Docs.EmailAccounts + Utm.OnAdmin)" />
+                        @* <nop-doc-reference asp-string-resource="@T("Admin.Documentation.Reference.EmailAccounts", Docs.EmailAccounts + Utm.OnAdmin)" /> *@
 
                         @await Html.PartialAsync("Table", new DataTablesModel
                         {
                             Name = "email-accounts-grid",
                             RowIdBasedOnField = nameof(EmailAccountModel.Email),
-                            UrlRead = new DataUrl("List", "EmailAccount", null),
+                            UrlRead = new DataUrl("ListByStoreId", "EmailAccount", null),
                             Length = Model.PageSize,
                             LengthMenu = Model.AvailablePageSizes,
                             ColumnCollection = new List<ColumnProperty>
                             {
+                                new ColumnProperty(nameof(EmailAccountModel.Store))
+                                {
+                                    Title = T("Admin.Configuration.EmailAccounts.Fields.Store").Text,
+                                    Width = "200",
+                                },
                                 new ColumnProperty(nameof(EmailAccountModel.Email))
                                 {
                                     Title = T("Admin.Configuration.EmailAccounts.Fields.Email").Text
@@ -60,10 +65,10 @@
                                     Title = T("Admin.Configuration.EmailAccounts.Fields.DisplayName").Text,
                                     Width = "200"
                                 },
-                                new ColumnProperty(nameof(EmailAccountModel.IsDefaultEmailAccount))
+                                new ColumnProperty(nameof(EmailAccountModel.DefaultForStore))
                                 {
                                     Title = T("Admin.Configuration.EmailAccounts.Fields.IsDefaultEmailAccount").Text,
-                                    Width = "200",
+                                    Width = "100",
                                     ClassName =  NopColumnClassDefaults.CenterAll,
                                     Render = new RenderBoolean()
                                 },
@@ -74,7 +79,7 @@
                                     ClassName =  NopColumnClassDefaults.CenterAll + " column-default",
                                     Render = new RenderButtonCustom(NopButtonClassDefaults.Success, T("Admin.Configuration.EmailAccounts.Fields.MarkAsDefaultEmail").Text)
                                     {
-                                        Url = Url.Content("~/Admin/EmailAccount/MarkAsDefaultEmail/")
+                                        Url = Url.Content("~/Admin/EmailAccount/MarkAsDefaultEmailForStore/")
                                     }
                                 },
                                 new ColumnProperty(nameof(EmailAccountModel.Id))
