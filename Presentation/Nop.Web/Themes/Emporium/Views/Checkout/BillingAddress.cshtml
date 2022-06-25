@@ -4,11 +4,16 @@
 @inject IWebHelper webHelper
 @inject IWorkContext workContext
 @inject ICustomerService _customerService
+@inject Nop.Core.IWorkContext _workContext
 
 @{
     Layout = "_ColumnsOne";
 
     var storeLocation = webHelper.GetStoreLocation();
+
+    var currentCustomer = await _workContext.GetCurrentCustomerAsync();
+    var ShippingAddress = currentCustomer.ShippingAddressId;
+	var BillingAddress = currentCustomer.BillingAddressId;
 
     //title
     NopHtml.AddTitleParts(T("PageTitle.Checkout").Text);
@@ -33,7 +38,7 @@
                     <div class="section ship-to-same-address">
                         <div class="selector">
                             <input asp-for="ShipToSameAddress" />
-                            <label asp-for="ShipToSameAddress">@T("Checkout.ShipToSameAddress")</label>
+                            <label asp-for="ShipToSameAddress" style="font-size: 20px !important;">@T("Checkout.ShipToSameAddress")</label>
                         </div>
                     </div>
                 }
@@ -50,6 +55,12 @@
                     <div class="address-grid">
                         @foreach (var item in Model.ExistingAddresses)
                         {
+                            var selectedAs = "";
+                            @if(item.Id == BillingAddress && item.Id != ShippingAddress) selectedAs = "Billing Address";
+                            else if(item.Id == ShippingAddress  && item.Id != BillingAddress) selectedAs = "Shipping Address";
+                            else if(item.Id == BillingAddress && item.Id == ShippingAddress ) selectedAs = "Shipping and Billing Address";
+                            else selectedAs = "-";
+
                             <div class="address-item">
                                 <ul class="address-box">
                                     <li class="name">
@@ -58,6 +69,10 @@
                                     <li class="email">
                                         <label>@T("Address.Fields.Email"):</label>
                                         <span>@item.Email</span>
+                                    </li>
+                                    <li class="phone">
+                                        <label><strong>Selected As:</strong></label>
+                                        <span>@selectedAs</span>
                                     </li>
                                     @if (item.PhoneEnabled)
                                     {

@@ -395,6 +395,7 @@ input[type="text"],
 input[type="password"],
 input[type="email"],
 input[type="tel"],
+input[type="date"],
 textarea {
 	-webkit-appearance: none;
     -moz-appearance: none;
@@ -451,6 +452,7 @@ input[type="text"],
 input[type="password"],
 input[type="email"],
 input[type="tel"],
+input[type="date"],
 textarea, select {
 	height: 45px;
 	border: 1px solid #e7e7e7;
@@ -806,6 +808,7 @@ label, label + * {
 }
 
 .inputs input[type="text"],
+.inputs input[type="date"],
 .inputs input[type="password"],
 .inputs input[type="email"],
 .inputs input[type="tel"],

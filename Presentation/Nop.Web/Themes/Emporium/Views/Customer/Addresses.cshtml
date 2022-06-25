@@ -11,6 +11,11 @@
     NopHtml.AppendPageCssClassParts("html-account-page");
     NopHtml.AppendPageCssClassParts("html-address-list-page");
 
+	var currentCustomer = await _workContext.GetCurrentCustomerAsync();
+	
+	var ShippingAddress = currentCustomer.ShippingAddressId;
+	var BillingAddress = currentCustomer.BillingAddressId;
+
 	var temporaryShippingAddressKey = "temporary-shipping-address-id";
 	var temporaryBillingAddressKey = "temporary-billing-address-id";
 
@@ -36,6 +41,11 @@
 				@for (var i = 0; i < Model.Addresses.Count; i++)
 				{
 					var address = Model.Addresses[i];
+					var selectedAs = "";
+					@if(address.Id == BillingAddress && address.Id != ShippingAddress) selectedAs = "Billing Address";
+					else if(address.Id == ShippingAddress  && address.Id != BillingAddress) selectedAs = "Shipping Address";
+					else if(address.Id == BillingAddress && address.Id == ShippingAddress ) selectedAs = "Shipping and Billing Address";
+					else selectedAs = "Address";
 
 					if (address.Id == temporaryBillingAddressId || address.Id == temporaryShippingAddressId)
 					{
@@ -44,7 +54,7 @@
 
 					<div class="section address-item">
 						<div class="title">
-							<strong>@address.FirstName @address.LastName</strong>
+							<strong>@selectedAs</strong>
 						</div>
 						<ul class="info">
 							<li class="name">

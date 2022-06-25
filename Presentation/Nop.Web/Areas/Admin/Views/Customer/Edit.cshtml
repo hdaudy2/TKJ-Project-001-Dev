@@ -38,7 +38,14 @@
                     @T("Admin.Customers.Customers.SendPM")
                 </button>
              }
-            @if (Model.AllowSendingOfWelcomeMessage)
+            @if (!Model.Active)
+            {
+                <button type="submit" id="Active" name="customer-Activation" class="btn btn-success">
+                    @T("Admin.Customers.Customers.ActiveCustomerByAdmin")
+                </button>
+                <nop-action-confirmation asp-button-id="customer-Activation" />
+            }
+            @if (Model.AllowSendingOfWelcomeMessage && Model.Active)
             {
                 <button type="submit" id="send-welcome-message" name="send-welcome-message" class="btn btn-success">
                     <i class="far fa-smile"></i>
