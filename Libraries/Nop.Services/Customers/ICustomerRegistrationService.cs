@@ -14,11 +14,12 @@ namespace Nop.Services.Customers
         /// </summary>
         /// <param name="usernameOrEmail">Username or email</param>
         /// <param name="password">Password</param>
+        /// <param name="userRole">Administrators or Customers</param>
         /// <returns>
         /// A task that represents the asynchronous operation
         /// The task result contains the result
         /// </returns>
-        Task<CustomerLoginResults> ValidateCustomerAsync(string usernameOrEmail, string password);
+        Task<CustomerLoginResults> ValidateCustomerAsync(string usernameOrEmail, string password, string userRole = "Customers");
 
         /// <summary>
         /// Register customer

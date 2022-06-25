@@ -43,6 +43,11 @@
         /// <summary>
         /// Requires multi-factor authentication
         /// </summary>
-        MultiFactorAuthenticationRequired = 8
+        MultiFactorAuthenticationRequired = 8,
+        
+        /// <summary>
+        /// unauthorized login
+        /// </summary>
+        unauthorizedLogin = 9
     }
 }

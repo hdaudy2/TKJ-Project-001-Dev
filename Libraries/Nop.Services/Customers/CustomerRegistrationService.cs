@@ -138,11 +138,12 @@ namespace Nop.Services.Customers
         /// </summary>
         /// <param name="usernameOrEmail">Username or email</param>
         /// <param name="password">Password</param>
+        /// <param name="userRole">Administrators or Customers</param>
         /// <returns>
         /// A task that represents the asynchronous operation
         /// The task result contains the result
         /// </returns>
-        public virtual async Task<CustomerLoginResults> ValidateCustomerAsync(string usernameOrEmail, string password)
+        public virtual async Task<CustomerLoginResults> ValidateCustomerAsync(string usernameOrEmail, string password, string userRole = "Customers")
         {
             var customer = _customerSettings.UsernamesEnabled ?
                 await _customerService.GetCustomerByUsernameAsync(usernameOrEmail) :
@@ -177,6 +178,21 @@ namespace Nop.Services.Customers
                 await _customerService.UpdateCustomerAsync(customer);
 
                 return CustomerLoginResults.WrongPassword;
+            }
+
+            //Check is Administrator
+            var isAdmin = await _customerService.IsAdminAsync(customer);
+            //Check is Store Administrator
+            var isStore = await _customerService.IsStoreAdminAsync(customer);
+
+            //Check  unauthorized login
+            if (userRole == "Administrators" && !(isAdmin || isStore))
+            {
+                return CustomerLoginResults.unauthorizedLogin;
+            }
+            else if (userRole == "Customers" && (isAdmin || isStore))
+            {
+                return CustomerLoginResults.unauthorizedLogin;
             }
 
             var selectedProvider = await _genericAttributeService.GetAttributeAsync<string>(customer, NopCustomerDefaults.SelectedMultiFactorAuthenticationProviderAttribute);

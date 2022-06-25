@@ -37,6 +37,11 @@ namespace Nop.Web.Infrastructure
                 pattern: $"{lang}/login/",
                 defaults: new { controller = "Customer", action = "Login" });
 
+            //Admin Login
+            endpointRouteBuilder.MapControllerRoute(name: "AdminLogin",
+                pattern: $"{lang}/login-admin",
+                defaults: new { controller = "Customer", action = "LoginAdmin" });
+
             // multi-factor verification digit code page
             endpointRouteBuilder.MapControllerRoute(name: "MultiFactorVerification",
                 pattern: $"{lang}/multi-factor-verification/",
