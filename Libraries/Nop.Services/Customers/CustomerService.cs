@@ -1168,6 +1168,25 @@ namespace Nop.Services.Customers
 
         #endregion
 
+        #region Email Restriction
+
+        /// <summary>
+        /// Adds a coupon code
+        /// </summary>
+        /// <param name="customer">Customer</param>
+        /// <returns>
+        /// A task that represents the asynchronous operation
+        /// The task result contains the new coupon codes document
+        /// </returns>
+        public virtual async Task<IList<GenericAttribute>> GetGenericAttributesByCustomerAsync(Customer customer)
+        {
+            var keyGroup = customer.GetType().Name;
+            var genericAttributes = await _genericAttributeService.GetAttributesForEntityAsync(customer.Id, keyGroup);
+            return genericAttributes;
+        }
+
+        #endregion
+
         #region Customer roles
 
         /// <summary>
@@ -1380,6 +1399,20 @@ namespace Nop.Services.Customers
         public virtual async Task<bool> IsAdminAsync(Customer customer, bool onlyActiveCustomerRoles = true)
         {
             return await IsInCustomerRoleAsync(customer, NopCustomerDefaults.AdministratorsRoleName, onlyActiveCustomerRoles);
+        }
+
+        /// <summary>
+        /// Gets a value indicating whether customer is store administrator
+        /// </summary>
+        /// <param name="customer">Customer</param>
+        /// <param name="onlyActiveCustomerRoles">A value indicating whether we should look only in active customer roles</param>
+        /// <returns>
+        /// A task that represents the asynchronous operation
+        /// The task result contains the result
+        /// </returns>
+        public virtual async Task<bool> IsStoreAdminAsync(Customer customer, bool onlyActiveCustomerRoles = true)
+        {
+            return await IsInCustomerRoleAsync(customer, NopCustomerDefaults.StoreAdministratorsRoleName, onlyActiveCustomerRoles);
         }
 
         /// <summary>

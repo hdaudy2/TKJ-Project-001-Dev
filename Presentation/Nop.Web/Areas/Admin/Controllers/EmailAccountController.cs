@@ -10,6 +10,7 @@ using Nop.Services.Localization;
 using Nop.Services.Logging;
 using Nop.Services.Messages;
 using Nop.Services.Security;
+using Nop.Services.Customers;
 using Nop.Web.Areas.Admin.Factories;
 using Nop.Web.Areas.Admin.Infrastructure.Mapper.Extensions;
 using Nop.Web.Areas.Admin.Models.Messages;
@@ -24,6 +25,7 @@ namespace Nop.Web.Areas.Admin.Controllers
 
         private readonly EmailAccountSettings _emailAccountSettings;
         private readonly ICustomerActivityService _customerActivityService;
+        private readonly ICustomerService _customerService;
         private readonly IEmailAccountModelFactory _emailAccountModelFactory;
         private readonly IEmailAccountService _emailAccountService;
         private readonly IEmailSender _emailSender;
@@ -41,6 +43,7 @@ namespace Nop.Web.Areas.Admin.Controllers
 
         public EmailAccountController(EmailAccountSettings emailAccountSettings,
             ICustomerActivityService customerActivityService,
+            ICustomerService customerService,
             IEmailAccountModelFactory emailAccountModelFactory,
             IEmailAccountService emailAccountService,
             IEmailSender emailSender,
@@ -54,6 +57,7 @@ namespace Nop.Web.Areas.Admin.Controllers
         {
             _emailAccountSettings = emailAccountSettings;
             _customerActivityService = customerActivityService;
+            _customerService = customerService;
             _emailAccountModelFactory = emailAccountModelFactory;
             _emailAccountService = emailAccountService;
             _emailSender = emailSender;
@@ -104,6 +108,28 @@ namespace Nop.Web.Areas.Admin.Controllers
             return Json(model);
         }
 
+        [HttpPost]
+        /// <returns>A task that represents the asynchronous operation</returns>
+        public virtual async Task<IActionResult> ListByStoreId(EmailAccountSearchModel searchModel)
+        {
+            if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageEmailAccounts))
+                return await AccessDeniedDataTablesJson();
+
+            var storeId = 0; 
+            
+            var currentCustomer = await _workContext.GetCurrentCustomerAsync(); 
+            var isAdmin = await _customerService.IsAdminAsync(currentCustomer);
+            var isStoreAdmin = await _customerService.IsStoreAdminAsync(currentCustomer);
+            
+            if(isStoreAdmin) storeId = (await _storeContext.GetCurrentStoreAsync()).Id;
+
+            //prepare model
+            var model = await _emailAccountModelFactory.PrepareEmailAccountListByStoreIDModelAsync(searchModel, storeId);
+
+            return Json(model);
+        }
+
+        /// <returns>A task that represents the asynchronous operation</returns>
         public virtual async Task<IActionResult> MarkAsDefaultEmail(int id)
         {
             if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageEmailAccounts))
@@ -119,6 +145,33 @@ namespace Nop.Web.Areas.Admin.Controllers
             return RedirectToAction("List");
         }
 
+        /// <returns>A task that represents the asynchronous operation</returns>
+        public virtual async Task<IActionResult> MarkAsDefaultEmailForStore(int id)
+        {
+            if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageEmailAccounts))
+                return AccessDeniedView();
+
+            var currentStore = await _storeContext.GetCurrentStoreAsync();
+
+            var defaultEmailAccount = await _emailAccountService.GetDefaultEmailAccountByStoreIdAsync(currentStore.Id);
+
+            var newEmail = await _emailAccountService.GetEmailAccountByIdAsync(id);
+            if (newEmail == null)
+                return RedirectToAction("List");
+
+            if (newEmail.Id == defaultEmailAccount?.Id)
+                return RedirectToAction("List");
+
+            if(defaultEmailAccount != null) defaultEmailAccount.DefaultForStore = false;
+            newEmail.DefaultForStore = true;
+            
+            if(defaultEmailAccount != null) await _emailAccountService.UpdateEmailAccountAsync(defaultEmailAccount);
+            await _emailAccountService.UpdateEmailAccountAsync(newEmail);
+
+            return RedirectToAction("List");
+        }
+
+        /// <returns>A task that represents the asynchronous operation</returns>
         public virtual async Task<IActionResult> Create()
         {
             if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageEmailAccounts))
@@ -198,6 +251,9 @@ namespace Nop.Web.Areas.Admin.Controllers
             var emailAccount = await _emailAccountService.GetEmailAccountByIdAsync(model.Id);
             if (emailAccount == null)
                 return RedirectToAction("List");
+            
+            model.DefaultForStore = emailAccount.DefaultForStore;
+            model.RegisteredInStoreId = emailAccount.RegisteredInStoreId;            
 
             if (ModelState.IsValid)
             {

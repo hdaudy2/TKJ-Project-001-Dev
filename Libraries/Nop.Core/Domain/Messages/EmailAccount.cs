@@ -44,5 +44,15 @@
         /// Gets or sets a value that controls whether the default system credentials of the application are sent with requests.
         /// </summary>
         public bool UseDefaultCredentials { get; set; }
+
+        /// <summary>
+        /// Gets or sets an Id of store which email was registered
+        /// </summary>
+        public int RegisteredInStoreId { get; set; }
+
+        /// <summary>
+        /// Gets or sets an Default Email Flag for Store
+        /// </summary>
+        public bool DefaultForStore { get; set; }
     }
 }

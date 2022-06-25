@@ -30,6 +30,17 @@ namespace Nop.Web.Areas.Admin.Factories
         Task<EmailAccountListModel> PrepareEmailAccountListModelAsync(EmailAccountSearchModel searchModel);
 
         /// <summary>
+        /// Prepare paged email account list model
+        /// </summary>
+        /// <param name="searchModel">Email account search model</param>
+        /// <param name="storeId">Store Identifier</param>
+        /// <returns>
+        /// A task that represents the asynchronous operation
+        /// The task result contains the email account list model
+        /// </returns>
+        Task<EmailAccountListModel> PrepareEmailAccountListByStoreIDModelAsync(EmailAccountSearchModel searchModel, int storeId);
+        
+        /// <summary>
         /// Prepare email account model
         /// </summary>
         /// <param name="model">Email account model</param>
