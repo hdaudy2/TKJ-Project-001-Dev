@@ -57,17 +57,11 @@ namespace Nop.Web.Models.Customer
         public bool LastNameRequired { get; set; }
 
         public bool DateOfBirthEnabled { get; set; }
-        [NopResourceDisplayName("Account.Fields.DateOfBirth")]
-        public int? DateOfBirthDay { get; set; }
-        [NopResourceDisplayName("Account.Fields.DateOfBirth")]
-        public int? DateOfBirthMonth { get; set; }
-        [NopResourceDisplayName("Account.Fields.DateOfBirth")]
-        public int? DateOfBirthYear { get; set; }
         public bool DateOfBirthRequired { get; set; }
-        public DateTime? ParseDateOfBirth()
-        {
-            return CommonHelper.ParseDate(DateOfBirthYear, DateOfBirthMonth, DateOfBirthDay);
-        }
+
+        [DisplayFormat(DataFormatString = "{0:yyyy-MM-dd}", ApplyFormatInEditMode = true)]
+        [NopResourceDisplayName("Account.Fields.DateOfBirth")]
+        public Nullable<DateTime> DateOfBirth { get; set; }
 
         public bool CompanyEnabled { get; set; }
         public bool CompanyRequired { get; set; }
@@ -78,6 +72,9 @@ namespace Nop.Web.Models.Customer
         public bool StreetAddressRequired { get; set; }
         [NopResourceDisplayName("Account.Fields.StreetAddress")]
         public string StreetAddress { get; set; }
+        
+        [NopResourceDisplayName("Account.Fields.StreetAddress")]
+        public string StreetAddressForShipping { get; set; }
 
         public bool StreetAddress2Enabled { get; set; }
         public bool StreetAddress2Required { get; set; }
@@ -88,11 +85,17 @@ namespace Nop.Web.Models.Customer
         public bool ZipPostalCodeRequired { get; set; }
         [NopResourceDisplayName("Account.Fields.ZipPostalCode")]
         public string ZipPostalCode { get; set; }
+        
+        [NopResourceDisplayName("Account.Fields.ZipPostalCode")]
+        public string ZipPostalCodeForShipping { get; set; }
 
         public bool CityEnabled { get; set; }
         public bool CityRequired { get; set; }
         [NopResourceDisplayName("Account.Fields.City")]
         public string City { get; set; }
+
+        [NopResourceDisplayName("Account.Fields.City")]
+        public string CityForShipping { get; set; }
 
         public bool CountyEnabled { get; set; }
         public bool CountyRequired { get; set; }
@@ -109,16 +112,28 @@ namespace Nop.Web.Models.Customer
         public bool StateProvinceRequired { get; set; }
         [NopResourceDisplayName("Account.Fields.StateProvince")]
         public int StateProvinceId { get; set; }
+        [NopResourceDisplayName("Account.Fields.StateProvince")]
+        public int StateProvinceIdForShipping { get; set; }
         public IList<SelectListItem> AvailableStates { get; set; }
 
         public bool PhoneEnabled { get; set; }
         public bool PhoneRequired { get; set; }
+        
         [DataType(DataType.PhoneNumber)]
         [NopResourceDisplayName("Account.Fields.Phone")]
         public string Phone { get; set; }
+        
+        [DataType(DataType.PhoneNumber)]
+        [NopResourceDisplayName("Account.Fields.Phone")]
+        public string PhoneForBilling { get; set; }
+        
+        [DataType(DataType.PhoneNumber)]
+        [NopResourceDisplayName("Account.Fields.Phone")]
+        public string PhoneForShipping { get; set; }
 
         public bool FaxEnabled { get; set; }
         public bool FaxRequired { get; set; }
+
         [DataType(DataType.PhoneNumber)]
         [NopResourceDisplayName("Account.Fields.Fax")]
         public string Fax { get; set; }
@@ -126,6 +141,9 @@ namespace Nop.Web.Models.Customer
         public bool NewsletterEnabled { get; set; }
         [NopResourceDisplayName("Account.Fields.Newsletter")]
         public bool Newsletter { get; set; }
+
+        [NopResourceDisplayName("Account.Fields.SameAsAbove")]
+        public bool SameAsAbove { get; set; }
         
         public bool AcceptPrivacyPolicyEnabled { get; set; }
         public bool AcceptPrivacyPolicyPopup { get; set; }

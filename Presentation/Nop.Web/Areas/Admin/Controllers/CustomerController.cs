@@ -539,7 +539,7 @@ namespace Nop.Web.Areas.Admin.Controllers
 
         [HttpPost, ParameterBasedOnFormName("save-continue", "continueEditing")]
         [FormValueRequired("save", "save-continue")]
-        public virtual async Task<IActionResult> Edit(CustomerModel model, bool continueEditing, IFormCollection form)
+        public virtual async Task<IActionResult> Edit(CustomerModel model, bool continueEditing, IFormCollection form, bool usedForCustomerActivation = false)
         {
             if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageCustomers))
                 return AccessDeniedView();
@@ -780,7 +780,8 @@ namespace Nop.Web.Areas.Admin.Controllers
                     await _customerActivityService.InsertActivityAsync("EditCustomer",
                         string.Format(await _localizationService.GetResourceAsync("ActivityLog.EditCustomer"), customer.Id), customer);
 
-                    _notificationService.SuccessNotification(await _localizationService.GetResourceAsync("Admin.Customers.Customers.Updated"));
+                    if(usedForCustomerActivation) _notificationService.SuccessNotification(await _localizationService.GetResourceAsync("Admin.Customers.Customers.ActiveCustomerByAdmin.Success"));
+                    else _notificationService.SuccessNotification(await _localizationService.GetResourceAsync("Admin.Customers.Customers.Updated"));
 
                     if (!continueEditing)
                         return RedirectToAction("List");
@@ -1059,6 +1060,27 @@ namespace Nop.Web.Areas.Admin.Controllers
             await _genericAttributeService.SaveAttributeAsync<int?>(currentCustomer, NopCustomerDefaults.ImpersonatedCustomerIdAttribute, customer.Id);
 
             return RedirectToAction("Index", "Home", new { area = string.Empty });
+        }
+
+        [HttpPost, ActionName("Edit")]
+        [FormValueRequired("customer-Activation")]
+        /// <returns>A task that represents the asynchronous operation</returns>
+        public virtual async Task<IActionResult> CustomerActivation(CustomerModel model, IFormCollection form)
+        {
+           if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageCustomers))
+                return AccessDeniedView();
+            
+            model.Active = true;
+            await Edit(model, false, form, true);
+
+            //try to get a customer with the specified id
+            var customer = await _customerService.GetCustomerByIdAsync(model.Id);
+            if (customer == null)
+                return RedirectToAction("List");
+            
+            await _workflowMessageService.SendCustomerWelcomeMessageAsync(customer, (await _workContext.GetWorkingLanguageAsync()).Id);
+
+            return RedirectToAction("List");
         }
 
         [HttpPost, ActionName("Edit")]

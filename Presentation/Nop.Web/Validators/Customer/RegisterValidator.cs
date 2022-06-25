@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Linq;
+using System.Text.RegularExpressions;
 using FluentValidation;
 using Nop.Core;
 using Nop.Core.Domain.Customers;
@@ -54,14 +55,13 @@ namespace Nop.Web.Validators.Customer
                     .NotEqual(0)
                     .WithMessageAwait(localizationService.GetResourceAsync("Account.Fields.Country.Required"));
             }
-            if (customerSettings.CountryEnabled &&
-                customerSettings.StateProvinceEnabled &&
+            if (customerSettings.StateProvinceEnabled &&
                 customerSettings.StateProvinceRequired)
             {
                 RuleFor(x => x.StateProvinceId).MustAwait(async (x, context) =>
                 {
                     //does selected country have states?
-                    var hasStates = (await stateProvinceService.GetStateProvincesByCountryIdAsync(x.CountryId)).Any();
+                    var hasStates = (await stateProvinceService.GetStateProvincesByCountryIdAsync(41)).Any();
                     if (hasStates)
                     {
                         //if yes, then ensure that a state is selected
@@ -71,30 +71,31 @@ namespace Nop.Web.Validators.Customer
 
                     return true;
                 }).WithMessageAwait(localizationService.GetResourceAsync("Account.Fields.StateProvince.Required"));
+
+                RuleFor(x => x.StateProvinceIdForShipping).MustAwait(async (x, context) =>
+                {
+                    //does selected country have states?
+                    var hasStates = (await stateProvinceService.GetStateProvincesByCountryIdAsync(41)).Any();
+                    if (hasStates)
+                    {
+                        //if yes, then ensure that a state is selected
+                        if (x.StateProvinceIdForShipping == 0)
+                            return false;
+                    }
+
+                    return true;
+                }).WithMessageAwait(localizationService.GetResourceAsync("Account.Fields.StateProvince.Required"));
             }
             if (customerSettings.DateOfBirthEnabled && customerSettings.DateOfBirthRequired)
             {
                 //entered?
-                RuleFor(x => x.DateOfBirthDay).Must((x, context) =>
+                RuleFor(x => x.DateOfBirth).Must((x, context) =>
                 {
-                    var dateOfBirth = x.ParseDateOfBirth();
-                    if (!dateOfBirth.HasValue)
+                    if (!x.DateOfBirth.HasValue)
                         return false;
 
                     return true;
                 }).WithMessageAwait(localizationService.GetResourceAsync("Account.Fields.DateOfBirth.Required"));
-
-                //minimum age
-                RuleFor(x => x.DateOfBirthDay).Must((x, context) =>
-                {
-                    var dateOfBirth = x.ParseDateOfBirth();
-                    if (dateOfBirth.HasValue && customerSettings.DateOfBirthMinimumAge.HasValue &&
-                        CommonHelper.GetDifferenceInYears(dateOfBirth.Value, DateTime.Today) <
-                        customerSettings.DateOfBirthMinimumAge.Value)
-                        return false;
-
-                    return true;
-                }).WithMessageAwait(localizationService.GetResourceAsync("Account.Fields.DateOfBirth.MinimumAge"), customerSettings.DateOfBirthMinimumAge);
             }
             if (customerSettings.CompanyRequired && customerSettings.CompanyEnabled)
             {
@@ -103,6 +104,7 @@ namespace Nop.Web.Validators.Customer
             if (customerSettings.StreetAddressRequired && customerSettings.StreetAddressEnabled)
             {
                 RuleFor(x => x.StreetAddress).NotEmpty().WithMessageAwait(localizationService.GetResourceAsync("Account.Fields.StreetAddress.Required"));
+                RuleFor(x => x.StreetAddressForShipping).NotEmpty().WithMessageAwait(localizationService.GetResourceAsync("Account.Fields.StreetAddress.Required"));
             }
             if (customerSettings.StreetAddress2Required && customerSettings.StreetAddress2Enabled)
             {
@@ -111,6 +113,7 @@ namespace Nop.Web.Validators.Customer
             if (customerSettings.ZipPostalCodeRequired && customerSettings.ZipPostalCodeEnabled)
             {
                 RuleFor(x => x.ZipPostalCode).NotEmpty().WithMessageAwait(localizationService.GetResourceAsync("Account.Fields.ZipPostalCode.Required"));
+                RuleFor(x => x.ZipPostalCodeForShipping).NotEmpty().WithMessageAwait(localizationService.GetResourceAsync("Account.Fields.ZipPostalCode.Required"));
             }
             if (customerSettings.CountyRequired && customerSettings.CountyEnabled)
             {
@@ -119,18 +122,73 @@ namespace Nop.Web.Validators.Customer
             if (customerSettings.CityRequired && customerSettings.CityEnabled)
             {
                 RuleFor(x => x.City).NotEmpty().WithMessageAwait(localizationService.GetResourceAsync("Account.Fields.City.Required"));
+                RuleFor(x => x.CityForShipping).NotEmpty().WithMessageAwait(localizationService.GetResourceAsync("Account.Fields.City.Required"));
             }
             if (customerSettings.PhoneRequired && customerSettings.PhoneEnabled)
             {
                 RuleFor(x => x.Phone).NotEmpty().WithMessageAwait(localizationService.GetResourceAsync("Account.Fields.Phone.Required"));
+                RuleFor(x => x.PhoneForBilling).NotEmpty().WithMessageAwait(localizationService.GetResourceAsync("Account.Fields.Phone.Required"));
+                RuleFor(x => x.PhoneForShipping).NotEmpty().WithMessageAwait(localizationService.GetResourceAsync("Account.Fields.Phone.Required"));
             }
             if (customerSettings.PhoneEnabled)
             {
                 RuleFor(x => x.Phone).IsPhoneNumber(customerSettings).WithMessageAwait(localizationService.GetResourceAsync("Account.Fields.Phone.NotValid"));
+                RuleFor(x => x.PhoneForBilling).IsPhoneNumber(customerSettings).WithMessageAwait(localizationService.GetResourceAsync("Account.Fields.Phone.NotValid"));
+                RuleFor(x => x.PhoneForShipping).IsPhoneNumber(customerSettings).WithMessageAwait(localizationService.GetResourceAsync("Account.Fields.Phone.NotValid"));
+
+                var regex = @"^\(?([0-9]{3})\)?[-.●]?([0-9]{3})[-.●]?([0-9]{4})$";
+                
+                RuleFor(x => x.Phone).Must((x, context) =>
+                {
+                    if(context != null){
+                        var match = Regex.Match(context, regex, RegexOptions.IgnoreCase); 
+                        if (!match.Success)
+                            return false;
+                    }
+
+                    return true;
+                }).WithMessageAwait(localizationService.GetResourceAsync("Account.Fields.Phone.NotValid"));
+                
+                RuleFor(x => x.PhoneForBilling).Must((x, context) =>
+                {
+                    if(context != null){
+                        var match = Regex.Match(context, regex, RegexOptions.IgnoreCase); 
+                        if (!match.Success)
+                            return false;
+                    }
+
+                    return true;
+                }).WithMessageAwait(localizationService.GetResourceAsync("Account.Fields.Phone.NotValid"));
+                
+                RuleFor(x => x.PhoneForShipping).Must((x, context) =>
+                {
+                    if(context != null){
+                        var match = Regex.Match(context, regex, RegexOptions.IgnoreCase); 
+                        if (!match.Success)
+                            return false;
+                    }
+
+                    return true;
+                }).WithMessageAwait(localizationService.GetResourceAsync("Account.Fields.Phone.NotValid"));
+
             }
             if (customerSettings.FaxRequired && customerSettings.FaxEnabled)
             {
                 RuleFor(x => x.Fax).NotEmpty().WithMessageAwait(localizationService.GetResourceAsync("Account.Fields.Fax.Required"));
+            }
+            if (customerSettings.FaxEnabled)
+            {
+                RuleFor(x => x.Fax).Must((x, context) =>
+                {
+                    if(context != null){
+                        var regex = @"^\(?([0-9]{3})\)?[-.●]?([0-9]{3})[-.●]?([0-9]{4})$";
+                        var match = Regex.Match(context, regex, RegexOptions.IgnoreCase); 
+                        if (!match.Success)
+                            return false;
+                    }
+
+                    return true;
+                }).WithMessageAwait(localizationService.GetResourceAsync("Account.Fields.Fax.NotValid"));
             }
         }
     }

@@ -86,6 +86,11 @@
         public static string StreetAddressAttribute => "StreetAddress";
 
         /// <summary>
+        /// Gets a name of generic attribute to store the value of 'StreetAddressForShipping'
+        /// </summary>
+        public static string StreetAddressForShippingAttribute => "StreetAddressForShipping";
+
+        /// <summary>
         /// Gets a name of generic attribute to store the value of 'StreetAddress2'
         /// </summary>
         public static string StreetAddress2Attribute => "StreetAddress2";
@@ -96,9 +101,19 @@
         public static string ZipPostalCodeAttribute => "ZipPostalCode";
 
         /// <summary>
+        /// Gets a name of generic attribute to store the value of 'ZipPostalCodeForShipping'
+        /// </summary>
+        public static string ZipPostalCodeForShippingAttribute => "ZipPostalCodeForShipping";
+
+        /// <summary>
         /// Gets a name of generic attribute to store the value of 'City'
         /// </summary>
         public static string CityAttribute => "City";
+
+        /// <summary>
+        /// Gets a name of generic attribute to store the value of 'CityForShipping'
+        /// </summary>
+        public static string CityForShippingAttribute => "CityForShipping";
 
         /// <summary>
         /// Gets a name of generic attribute to store the value of 'County'
@@ -116,9 +131,24 @@
         public static string StateProvinceIdAttribute => "StateProvinceId";
 
         /// <summary>
+        /// Gets a name of generic attribute to store the value of 'StateProvinceIdForShipping'
+        /// </summary>
+        public static string StateProvinceIdForShippingAttribute => "StateProvinceIdForShipping";
+
+        /// <summary>
         /// Gets a name of generic attribute to store the value of 'Phone'
         /// </summary>
         public static string PhoneAttribute => "Phone";
+        
+        /// <summary>
+        /// Gets a name of custom attribute to store the value of 'PhoneForBilling'
+        /// </summary>
+        public static string PhoneForBillingAttribute => "PhoneForBilling";
+        
+        /// <summary>
+        /// Gets a name of custom attribute to store the value of 'PhoneForShipping'
+        /// </summary>
+        public static string PhoneForShippingAttribute => "PhoneForShipping";
 
         /// <summary>
         /// Gets a name of generic attribute to store the value of 'Fax'
@@ -289,6 +319,11 @@
         /// Gets a name of generic attribute to store the value of 'CloseConfigurationSteps'
         /// </summary>
         public static string CloseConfigurationStepsAttribute => "CloseConfigurationSteps";
+
+        /// <summary>
+        /// Gets a name of generic attribute to store the value of 'SameAsAbove'
+        /// </summary>
+        public static string SameAsAboveAttribute => "SameAsAbove";
 
         #endregion
     }

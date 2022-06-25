@@ -981,30 +981,38 @@ namespace Nop.Web.Controllers
                         await _genericAttributeService.SaveAttributeAsync(customer, NopCustomerDefaults.LastNameAttribute, model.LastName);
                     if (_customerSettings.DateOfBirthEnabled)
                     {
-                        var dateOfBirth = model.ParseDateOfBirth();
-                        await _genericAttributeService.SaveAttributeAsync(customer, NopCustomerDefaults.DateOfBirthAttribute, dateOfBirth);
+                        await _genericAttributeService.SaveAttributeAsync(customer, NopCustomerDefaults.DateOfBirthAttribute, model.DateOfBirth);
                     }
                     if (_customerSettings.CompanyEnabled)
                         await _genericAttributeService.SaveAttributeAsync(customer, NopCustomerDefaults.CompanyAttribute, model.Company);
                     if (_customerSettings.StreetAddressEnabled)
                         await _genericAttributeService.SaveAttributeAsync(customer, NopCustomerDefaults.StreetAddressAttribute, model.StreetAddress);
+                    await _genericAttributeService.SaveAttributeAsync(customer, NopCustomerDefaults.StreetAddressForShippingAttribute, model.StreetAddressForShipping);
                     if (_customerSettings.StreetAddress2Enabled)
                         await _genericAttributeService.SaveAttributeAsync(customer, NopCustomerDefaults.StreetAddress2Attribute, model.StreetAddress2);
                     if (_customerSettings.ZipPostalCodeEnabled)
                         await _genericAttributeService.SaveAttributeAsync(customer, NopCustomerDefaults.ZipPostalCodeAttribute, model.ZipPostalCode);
+                    await _genericAttributeService.SaveAttributeAsync(customer, NopCustomerDefaults.ZipPostalCodeForShippingAttribute, model.ZipPostalCodeForShipping);
                     if (_customerSettings.CityEnabled)
                         await _genericAttributeService.SaveAttributeAsync(customer, NopCustomerDefaults.CityAttribute, model.City);
+                    await _genericAttributeService.SaveAttributeAsync(customer, NopCustomerDefaults.CityForShippingAttribute, model.CityForShipping);
                     if (_customerSettings.CountyEnabled)
                         await _genericAttributeService.SaveAttributeAsync(customer, NopCustomerDefaults.CountyAttribute, model.County);
                     if (_customerSettings.CountryEnabled)
-                        await _genericAttributeService.SaveAttributeAsync(customer, NopCustomerDefaults.CountryIdAttribute, model.CountryId);
+                        await _genericAttributeService.SaveAttributeAsync(customer, NopCustomerDefaults.CountryIdAttribute, 41);
                     if (_customerSettings.CountryEnabled && _customerSettings.StateProvinceEnabled)
-                        await _genericAttributeService.SaveAttributeAsync(customer, NopCustomerDefaults.StateProvinceIdAttribute,
-                            model.StateProvinceId);
+                        await _genericAttributeService.SaveAttributeAsync(customer, NopCustomerDefaults.StateProvinceIdAttribute, model.StateProvinceId);
+                    await _genericAttributeService.SaveAttributeAsync(customer, NopCustomerDefaults.StateProvinceIdForShippingAttribute, model.StateProvinceIdForShipping);
                     if (_customerSettings.PhoneEnabled)
                         await _genericAttributeService.SaveAttributeAsync(customer, NopCustomerDefaults.PhoneAttribute, model.Phone);
+                        await _genericAttributeService.SaveAttributeAsync(customer, NopCustomerDefaults.PhoneForBillingAttribute, model.PhoneForBilling);
+                        await _genericAttributeService.SaveAttributeAsync(customer, NopCustomerDefaults.PhoneForShippingAttribute, model.PhoneForShipping);
                     if (_customerSettings.FaxEnabled)
                         await _genericAttributeService.SaveAttributeAsync(customer, NopCustomerDefaults.FaxAttribute, model.Fax);
+                    if (true)
+                    {
+                        await _genericAttributeService.SaveAttributeAsync(customer, NopCustomerDefaults.SameAsAboveAttribute, model.SameAsAbove);
+                    }
 
                     //newsletter
                     if (_customerSettings.NewsletterEnabled)
@@ -1088,16 +1096,20 @@ namespace Nop.Web.Controllers
                     //save customer attributes
                     await _genericAttributeService.SaveAttributeAsync(customer, NopCustomerDefaults.CustomCustomerAttributes, customerAttributesXml);
 
-                    //insert default address (if possible)
-                    var defaultAddress = new Address
+                    // Shipping Address same as Billing Address
+                    var ShippingSameAsBilling = await _genericAttributeService.GetAttributeAsync<string>(customer, NopCustomerDefaults.SameAsAboveAttribute) == "True";
+
+                    // Address List for Customer
+                    List<Address> CustomerAddress = new List<Address>();
+
+                    // BillingAddress
+                    CustomerAddress.Add(new Address
                     {
                         FirstName = await _genericAttributeService.GetAttributeAsync<string>(customer, NopCustomerDefaults.FirstNameAttribute),
                         LastName = await _genericAttributeService.GetAttributeAsync<string>(customer, NopCustomerDefaults.LastNameAttribute),
                         Email = customer.Email,
                         Company = await _genericAttributeService.GetAttributeAsync<string>(customer, NopCustomerDefaults.CompanyAttribute),
-                        CountryId = await _genericAttributeService.GetAttributeAsync<int>(customer, NopCustomerDefaults.CountryIdAttribute) > 0
-                            ? (int?)await _genericAttributeService.GetAttributeAsync<int>(customer, NopCustomerDefaults.CountryIdAttribute)
-                            : null,
+                        CountryId = await _genericAttributeService.GetAttributeAsync<int>(customer, NopCustomerDefaults.CountryIdAttribute),
                         StateProvinceId = await _genericAttributeService.GetAttributeAsync<int>(customer, NopCustomerDefaults.StateProvinceIdAttribute) > 0
                             ? (int?)await _genericAttributeService.GetAttributeAsync<int>(customer, NopCustomerDefaults.StateProvinceIdAttribute)
                             : null,
@@ -1106,29 +1118,70 @@ namespace Nop.Web.Controllers
                         Address1 = await _genericAttributeService.GetAttributeAsync<string>(customer, NopCustomerDefaults.StreetAddressAttribute),
                         Address2 = await _genericAttributeService.GetAttributeAsync<string>(customer, NopCustomerDefaults.StreetAddress2Attribute),
                         ZipPostalCode = await _genericAttributeService.GetAttributeAsync<string>(customer, NopCustomerDefaults.ZipPostalCodeAttribute),
-                        PhoneNumber = await _genericAttributeService.GetAttributeAsync<string>(customer, NopCustomerDefaults.PhoneAttribute),
+                        PhoneNumber = await _genericAttributeService.GetAttributeAsync<string>(customer, NopCustomerDefaults.PhoneForBillingAttribute),
                         FaxNumber = await _genericAttributeService.GetAttributeAsync<string>(customer, NopCustomerDefaults.FaxAttribute),
                         CreatedOnUtc = customer.CreatedOnUtc
-                    };
-                    if (await _addressService.IsAddressValidAsync(defaultAddress))
+                    });
+
+                    // ShippingAddress
+                    if (!ShippingSameAsBilling)
                     {
-                        //some validation
-                        if (defaultAddress.CountryId == 0)
-                            defaultAddress.CountryId = null;
-                        if (defaultAddress.StateProvinceId == 0)
-                            defaultAddress.StateProvinceId = null;
-                        //set default address
-                        //customer.Addresses.Add(defaultAddress);
-
-                        await _addressService.InsertAddressAsync(defaultAddress);
-
-                        await _customerService.InsertCustomerAddressAsync(customer, defaultAddress);
-
-                        customer.BillingAddressId = defaultAddress.Id;
-                        customer.ShippingAddressId = defaultAddress.Id;
-
-                        await _customerService.UpdateCustomerAsync(customer);
+                        CustomerAddress.Add(new Address
+                        {
+                            FirstName = await _genericAttributeService.GetAttributeAsync<string>(customer, NopCustomerDefaults.FirstNameAttribute),
+                            LastName = await _genericAttributeService.GetAttributeAsync<string>(customer, NopCustomerDefaults.LastNameAttribute),
+                            Email = customer.Email,
+                            Company = await _genericAttributeService.GetAttributeAsync<string>(customer, NopCustomerDefaults.CompanyAttribute),
+                            CountryId = await _genericAttributeService.GetAttributeAsync<int>(customer, NopCustomerDefaults.CountryIdAttribute),
+                            StateProvinceId = await _genericAttributeService.GetAttributeAsync<int>(customer, NopCustomerDefaults.StateProvinceIdForShippingAttribute) > 0
+                                ? (int?)await _genericAttributeService.GetAttributeAsync<int>(customer, NopCustomerDefaults.StateProvinceIdForShippingAttribute)
+                                : null,
+                            County = await _genericAttributeService.GetAttributeAsync<string>(customer, NopCustomerDefaults.CountyAttribute),
+                            City = await _genericAttributeService.GetAttributeAsync<string>(customer, NopCustomerDefaults.CityForShippingAttribute),
+                            Address1 = await _genericAttributeService.GetAttributeAsync<string>(customer, NopCustomerDefaults.StreetAddressForShippingAttribute),
+                            Address2 = await _genericAttributeService.GetAttributeAsync<string>(customer, NopCustomerDefaults.StreetAddress2Attribute),
+                            ZipPostalCode = await _genericAttributeService.GetAttributeAsync<string>(customer, NopCustomerDefaults.ZipPostalCodeForShippingAttribute),
+                            PhoneNumber = await _genericAttributeService.GetAttributeAsync<string>(customer, NopCustomerDefaults.PhoneForShippingAttribute),
+                            FaxNumber = await _genericAttributeService.GetAttributeAsync<string>(customer, NopCustomerDefaults.FaxAttribute),
+                            CreatedOnUtc = customer.CreatedOnUtc
+                        });
                     }
+
+                    int addressInsertedNumber = 1;
+                    bool updateCustomer = false;
+
+                    foreach (var address in CustomerAddress)
+                    {
+                        var isValid = await _addressService.IsAddressValidAsync(address);
+
+                        if (isValid)
+                        {
+                            //some validation
+                            if (address.CountryId == 0)
+                                address.CountryId = null;
+                            if (address.StateProvinceId == 0)
+                                address.StateProvinceId = null;
+
+                            await _addressService.InsertAddressAsync(address);
+                            await _customerService.InsertCustomerAddressAsync(customer, address);
+
+                            if (addressInsertedNumber == 1)
+                            {
+                                customer.BillingAddressId = address.Id;
+                                customer.ShippingAddressId = address.Id;
+                            }
+                            if (addressInsertedNumber == 2)
+                            {
+                                customer.ShippingAddressId = address.Id;
+                            }
+
+                            if(updateCustomer == false) updateCustomer = true;
+                        }
+
+                        addressInsertedNumber++;
+                    }
+
+                    if (updateCustomer) await _customerService.UpdateCustomerAsync(customer);
 
                     //notifications
                     if (_customerSettings.NotifyNewCustomerRegistration)
