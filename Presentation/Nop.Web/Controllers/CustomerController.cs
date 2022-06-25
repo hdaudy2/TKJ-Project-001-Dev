@@ -437,6 +437,25 @@ namespace Nop.Web.Controllers
             return View(model);
         }
 
+        //available even when a store is closed
+        [CheckAccessClosedStore(true)]
+        //available even when navigation is not allowed
+        [CheckAccessPublicStore(true)]
+        public virtual async Task<IActionResult> LoginAdmin(bool? checkoutAsGuest)
+        {
+            var model = await _customerModelFactory.PrepareLoginModelAsync(checkoutAsGuest);
+            var customer = await _workContext.GetCurrentCustomerAsync();
+
+            if (await _customerService.IsRegisteredAsync(customer))
+            {
+                var fullName = await _customerService.GetCustomerFullNameAsync(customer);
+                var message = await _localizationService.GetResourceAsync("Account.Login.AlreadyLogin");
+                _notificationService.SuccessNotification(string.Format(message, _htmlEncoder.Encode(fullName)));
+            }
+
+            return View(model);
+        }
+
         [HttpPost]
         [ValidateCaptcha]
         //available even when a store is closed
@@ -508,6 +527,95 @@ namespace Nop.Web.Controllers
                     case CustomerLoginResults.LockedOut:
                         ModelState.AddModelError("", await _localizationService.GetResourceAsync("Account.Login.WrongCredentials.LockedOut"));
                         break;
+                    case CustomerLoginResults.unauthorizedLogin:
+                        ModelState.AddModelError("", await _localizationService.GetResourceAsync("Account.Login.WrongCredentials.unauthorizedLogin"));
+                        break;
+                    case CustomerLoginResults.WrongPassword:
+                    default:
+                        ModelState.AddModelError("", await _localizationService.GetResourceAsync("Account.Login.WrongCredentials"));
+                        break;
+                }
+            }
+
+            //If we got this far, something failed, redisplay form
+            model = await _customerModelFactory.PrepareLoginModelAsync(model.CheckoutAsGuest);
+            return View(model);
+        }
+
+        [HttpPost]
+        [ValidateCaptcha]
+        //available even when a store is closed
+        [CheckAccessClosedStore(true)]
+        //available even when navigation is not allowed
+        [CheckAccessPublicStore(true)]
+        public virtual async Task<IActionResult> LoginAdmin(LoginModel model, string returnUrl, bool captchaValid)
+        {
+            //validate CAPTCHA
+            if (_captchaSettings.Enabled && _captchaSettings.ShowOnLoginPage && !captchaValid)
+            {
+                ModelState.AddModelError("", await _localizationService.GetResourceAsync("Common.WrongCaptchaMessage"));
+            }
+
+            if (ModelState.IsValid)
+            {
+                var customerUserName = model.Username?.Trim();
+                var customerEmail = model.Email?.Trim();
+                var userNameOrEmail = _customerSettings.UsernamesEnabled ? customerUserName : customerEmail;
+
+                var loginResult = await _customerRegistrationService.ValidateCustomerAsync(userNameOrEmail, model.Password, "Administrators");
+                switch (loginResult)
+                {
+                    case CustomerLoginResults.Successful:
+                        {
+                            var customer = _customerSettings.UsernamesEnabled
+                                ? await _customerService.GetCustomerByUsernameAsync(customerUserName)
+                                : await _customerService.GetCustomerByEmailAsync(customerEmail);
+                            
+                            #region Multi-Tenant Plugin
+
+                            var _storeMappingService = Nop.Core.Infrastructure.EngineContext.Current.Resolve<Nop.Services.Stores.IStoreMappingService>();
+                            var storesId = _storeMappingService.GetStoreIdByEntityId(customer.Id, "Stores").LastOrDefault();
+
+                            if (storesId > 0 && storesId != (await _storeContext.GetCurrentStoreAsync()).Id)
+                            {
+                                ModelState.AddModelError("", await _localizationService.GetResourceAsync("Account.Login.WrongCredentials.NotRegistered"));
+                                break;
+
+                            }
+
+                            #endregion
+
+                            return await _customerRegistrationService.SignInCustomerAsync(customer, "/Admin", model.RememberMe);
+                        }
+                    case CustomerLoginResults.MultiFactorAuthenticationRequired:
+                        {
+                            var customerMultiFactorAuthenticationInfo = new CustomerMultiFactorAuthenticationInfo
+                            {
+                                UserName = userNameOrEmail,
+                                RememberMe = model.RememberMe,
+                                ReturnUrl = returnUrl
+                            };
+                            HttpContext.Session.Set(NopCustomerDefaults.CustomerMultiFactorAuthenticationInfo, customerMultiFactorAuthenticationInfo);
+                            return RedirectToRoute("MultiFactorVerification");
+                        }
+                    case CustomerLoginResults.CustomerNotExist:
+                        ModelState.AddModelError("", await _localizationService.GetResourceAsync("Account.Login.WrongCredentials.CustomerNotExist"));
+                        break;
+                    case CustomerLoginResults.Deleted:
+                        ModelState.AddModelError("", await _localizationService.GetResourceAsync("Account.Login.WrongCredentials.Deleted"));
+                        break;
+                    case CustomerLoginResults.NotActive:
+                        ModelState.AddModelError("", await _localizationService.GetResourceAsync("Account.Login.WrongCredentials.NotActive"));
+                        break;
+                    case CustomerLoginResults.NotRegistered:
+                        ModelState.AddModelError("", await _localizationService.GetResourceAsync("Account.Login.WrongCredentials.NotRegistered"));
+                        break;
+                    case CustomerLoginResults.LockedOut:
+                        ModelState.AddModelError("", await _localizationService.GetResourceAsync("Account.Login.WrongCredentials.LockedOut"));
+                        break;
+                    case CustomerLoginResults.unauthorizedLogin:
+                        ModelState.AddModelError("", await _localizationService.GetResourceAsync("Account.Login.WrongCredentials.unauthorizedLogin"));
+                        break;
                     case CustomerLoginResults.WrongPassword:
                     default:
                         ModelState.AddModelError("", await _localizationService.GetResourceAsync("Account.Login.WrongCredentials"));
@@ -558,6 +666,10 @@ namespace Nop.Web.Controllers
         public virtual async Task<IActionResult> Logout()
         {
             var customer = await _workContext.GetCurrentCustomerAsync();
+
+            var isAdmin = await _customerService.IsAdminAsync(customer);
+            var isStoreAdmin = await _customerService.IsStoreAdminAsync(customer);
+
             if (_workContext.OriginalCustomerIfImpersonated != null)
             {
                 //activity log
@@ -601,7 +713,7 @@ namespace Nop.Web.Controllers
                 TempData[$"{NopCookieDefaults.Prefix}{NopCookieDefaults.IgnoreEuCookieLawWarning}"] = true;
             }
 
-            return RedirectToRoute("Homepage");
+            return RedirectToRoute((isAdmin || isStoreAdmin) ? "AdminLogin" : "Homepage");
         }
 
         #endregion
