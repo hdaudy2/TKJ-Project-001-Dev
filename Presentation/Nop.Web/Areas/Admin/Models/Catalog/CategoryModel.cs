@@ -48,6 +48,9 @@ namespace Nop.Web.Areas.Admin.Models.Catalog
 
         [NopResourceDisplayName("Admin.Catalog.Categories.Fields.CategoryTemplate")]
         public int CategoryTemplateId { get; set; }
+        
+        [NopResourceDisplayName("Admin.Catalog.Categories.Fields.CodeId")]
+        public string CodeId { get; set; }
         public IList<SelectListItem> AvailableCategoryTemplates { get; set; }
 
         [NopResourceDisplayName("Admin.Catalog.Categories.Fields.MetaKeywords")]

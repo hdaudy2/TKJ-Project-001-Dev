@@ -195,7 +195,7 @@ namespace Nop.Services.Catalog
         /// </returns>
         public virtual async Task<Manufacturer> GetManufacturerByIdAsync(int manufacturerId)
         {
-            return await _manufacturerRepository.GetByIdAsync(manufacturerId, cache => default);
+            return await _manufacturerRepository.GetByIdAsync(manufacturerId, cache => default, includeDeleted: false);
         }
 
         /// <summary>

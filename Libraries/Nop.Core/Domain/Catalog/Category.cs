@@ -132,5 +132,10 @@ namespace Nop.Core.Domain.Catalog
         /// Gets or sets a value indicating whether the price range should be entered manually
         /// </summary>
         public bool ManuallyPriceRange { get; set; }
+
+        /// <summary>
+        /// Gets or sets a value for CodeId which represents Id from clients Categories 
+        /// </summary>
+        public string CodeId { get; set; }
     }
 }
