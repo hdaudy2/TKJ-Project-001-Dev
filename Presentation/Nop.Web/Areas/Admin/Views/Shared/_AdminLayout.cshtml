@@ -80,9 +80,9 @@
                     </li>
                     @await Component.InvokeAsync("AdminWidget", new { widgetZone = AdminWidgetZones.HeaderToggleAfter })
                 </ul>
-                <a href="@Url.Content("~/Admin")" class="brand-link navbar-dark">
+                @* <a href="@Url.Content("~/Admin")" class="brand-link navbar-dark">
                     <img src="~/css/admin/images/logo.png" alt="logo.png" class="brand-image logo d-block d-md-none d-sm-block d-sm-none">
-                </a>
+                </a> *@
                 <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarText" aria-controls="navbarText" aria-expanded="false" aria-label="Toggle navigation">
                     <span class="navbar-toggler-icon"></span>
                 </button>
@@ -157,10 +157,10 @@
         {
             <aside class="main-sidebar sidebar-dark-primary elevation-4">
                 <!-- Brand Logo -->
-            <a href="@Url.Content("~/Admin")" class="brand-link navbar-dark logo-switch">
+                @* <a href="@Url.Content("~/Admin")" class="brand-link navbar-dark logo-switch">
                     <img src="~/css/admin/images/logo.png" alt="logo.png" class="brand-image-xl logo-xl">
                     <img src="~/css/admin/images/logo-mini.png" alt="logo.png" class="brand-image-xs logo-xs">
-                </a>
+                </a> *@
                 <div class="sidebar">
                     <div class="sidebar-form">
                         <div id="search-box">
