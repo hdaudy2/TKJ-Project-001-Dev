@@ -1166,14 +1166,16 @@ namespace Nop.Services.Common
 
             //store info
             var store = await _storeService.GetStoreByIdAsync(order.StoreId) ?? await _storeContext.GetCurrentStoreAsync();
-            var anchor = new Anchor(store.Url.Trim('/'), font)
+            var address = new Anchor(store.CompanyAddress, font)
             {
-                Reference = store.Url
+                Reference = store.CompanyAddress
             };
 
-            var cellHeader = GetPdfCell(string.Format(await _localizationService.GetResourceAsync("PDFInvoice.Order#", lang.Id), order.CustomOrderNumber), titleFont);
+            var cellHeader = GetPdfCell(store.Name, titleFont);
             cellHeader.Phrase.Add(new Phrase(Environment.NewLine));
-            cellHeader.Phrase.Add(new Phrase(anchor));
+            cellHeader.Phrase.Add(new Phrase(address));
+            cellHeader.Phrase.Add(new Phrase(Environment.NewLine));
+            cellHeader.Phrase.Add(string.Format(await _localizationService.GetResourceAsync("PDFInvoice.Order#", lang.Id), order.CustomOrderNumber));
             cellHeader.Phrase.Add(new Phrase(Environment.NewLine));
             cellHeader.Phrase.Add(await GetParagraphAsync("PDFInvoice.OrderDate", lang, font, (await _dateTimeHelper.ConvertToUserTimeAsync(order.CreatedOnUtc, DateTimeKind.Utc)).ToString("D", new CultureInfo(lang.LanguageCulture))));
             cellHeader.Phrase.Add(new Phrase(Environment.NewLine));
@@ -1193,7 +1195,7 @@ namespace Nop.Services.Common
                 var logoFilePath = await _pictureService.GetThumbLocalPathAsync(logoPicture, 0, false);
                 var logo = Image.GetInstance(logoFilePath);
                 logo.Alignment = GetAlignment(lang, true);
-                logo.ScaleToFit(65f, 65f);
+                logo.ScaleToFit(100f, 100f);
 
                 var cellLogo = new PdfPCell { Border = Rectangle.NO_BORDER };
                 cellLogo.AddElement(logo);
