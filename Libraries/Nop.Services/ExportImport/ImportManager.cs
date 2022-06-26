@@ -426,21 +426,31 @@ namespace Nop.Services.ExportImport
                 switch (property.PropertyName)
                 {
                     case "Name":
+                    case "Title en":
                         category.Name = property.StringValue.Split(new[] { ">>" }, StringSplitOptions.RemoveEmptyEntries).Last().Trim();
+                        seName = await _urlRecordService.GetSeNameAsync(category.Name, true, false);
                         break;
                     case "Description":
+                    case "Description Top en":
                         category.Description = property.StringValue;
                         break;
                     case "CategoryTemplateId":
                         category.CategoryTemplateId = property.IntValue;
                         break;
+                    case "Code":
+                    // category.CodeId = int.Parse(string.Join("", property.StringValue.Split('-')));
+                    category.CodeId = property.StringValue;
+                    break;
                     case "MetaKeywords":
+                    case "Description MetaKeywords en":
                         category.MetaKeywords = property.StringValue;
                         break;
                     case "MetaDescription":
+                    case "Description MetaDescription en":
                         category.MetaDescription = property.StringValue;
                         break;
                     case "MetaTitle":
+                    case "Description PageTitle en":
                         category.MetaTitle = property.StringValue;
                         break;
                     case "ParentCategoryId":
@@ -452,6 +462,21 @@ namespace Nop.Services.ExportImport
                             isParentCategoryExists = isParentCategorySet || property.IntValue == 0;
 
                             category.ParentCategoryId = parentCategory?.Id ?? property.IntValue;
+                        }
+
+                        break;
+                    case "CodeParent":
+                        if (!isParentCategorySet)
+                        {
+
+                            var value = property.StringValue == "PG" ? "0" : property.StringValue;
+
+                            var parentCategory = await await allCategories.Values.FirstOrDefaultAwaitAsync(async c => (await c).CodeId == value);
+                            isParentCategorySet = parentCategory != null;
+
+                            isParentCategoryExists = isParentCategorySet || value == "0";
+
+                            category.ParentCategoryId = parentCategory?.Id ?? 0;
                         }
 
                         break;
@@ -515,8 +540,17 @@ namespace Nop.Services.ExportImport
                     case "Published":
                         category.Published = property.BooleanValue;
                         break;
+                    case "Status":
+                        category.Published = property.StringValue == "Enable";
+                        break;
+                    case "ShowNavigation":
+                        category.IncludeInTopMenu = property.StringValue == "yes";
+                        break;
                     case "DisplayOrder":
                         category.DisplayOrder = property.IntValue;
+                        break;
+                    case "Order":
+                        category.DisplayOrder = property.IntValue - 1;
                         break;
                     case "SeName":
                         seName = property.StringValue;
@@ -2268,7 +2302,8 @@ namespace Nop.Services.ExportImport
             foreach (var rowId in saveNextTime)
             {
                 manager.ReadFromXlsx(worksheet, rowId);
-                categoriesName.Add(manager.GetProperty("Name").StringValue);
+                var name = manager.GetProperty("Code") == null ? manager.GetProperty("Name").StringValue : manager.GetProperty("Title en").StringValue + "(" + manager.GetProperty("Code").StringValue + ")";
+                categoriesName.Add(name);
             }
 
             throw new ArgumentException(string.Format(await _localizationService.GetResourceAsync("Admin.Catalog.Categories.Import.CategoriesArentImported"), string.Join(", ", categoriesName)));
