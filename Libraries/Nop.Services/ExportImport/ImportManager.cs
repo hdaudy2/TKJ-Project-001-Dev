@@ -19,6 +19,7 @@ using Nop.Core.Http;
 using Nop.Core.Infrastructure;
 using Nop.Data;
 using Nop.Services.Catalog;
+using Nop.Services.Customers;
 using Nop.Services.Directory;
 using Nop.Services.ExportImport.Help;
 using Nop.Services.Localization;
@@ -44,6 +45,7 @@ namespace Nop.Services.ExportImport
         private readonly CatalogSettings _catalogSettings;
         private readonly ICategoryService _categoryService;
         private readonly ICountryService _countryService;
+        private readonly ICustomerService _customerService;
         private readonly ICustomerActivityService _customerActivityService;
         private readonly INopDataProvider _dataProvider;
         private readonly IDateRangeService _dateRangeService;
@@ -80,6 +82,7 @@ namespace Nop.Services.ExportImport
         public ImportManager(CatalogSettings catalogSettings,
             ICategoryService categoryService,
             ICountryService countryService,
+            ICustomerService customerService,
             ICustomerActivityService customerActivityService,
             INopDataProvider dataProvider,
             IDateRangeService dateRangeService,
@@ -112,6 +115,7 @@ namespace Nop.Services.ExportImport
             _catalogSettings = catalogSettings;
             _categoryService = categoryService;
             _countryService = countryService;
+            _customerService = customerService;
             _customerActivityService = customerActivityService;
             _dataProvider = dataProvider;
             _dateRangeService = dateRangeService;
@@ -1209,6 +1213,121 @@ namespace Nop.Services.ExportImport
             return filePaths;
         }
 
+        private ImportRolesColumnMetadata PrepareImportRolesForTierPricingDataAsync(IXLWorksheet worksheet)
+        {
+            var properties = GetPropertiesByExcelCells<TierPriceRoleImport>(worksheet);
+            var manager = new PropertyManager<TierPriceRoleImport>(properties, _catalogSettings);
+            var row = 2;
+            
+            List<RoleDetail> RoleDetailList = new List<RoleDetail>();
+
+            while (true)
+            {
+                var allColumnsAreEmpty = manager.GetProperties
+                    .Select(property => worksheet.Row(row).Cell(property.PropertyOrderPosition))
+                    .All(cell => string.IsNullOrEmpty(cell?.Value?.ToString()));
+
+                if (allColumnsAreEmpty)
+                    break;
+
+                manager.ReadFromXlsx(worksheet, row);
+
+                var Role = manager.GetProperty("Role Name").StringValue;
+                var Column = manager.GetProperty("Tier Column").StringValue;
+
+                RoleDetailList.Add(new RoleDetail(Role, Column));
+
+                row++;
+            }
+
+            return new ImportRolesColumnMetadata {
+                Manager = manager,
+                Properties = properties,
+                RoleDetails = RoleDetailList
+            };;
+        }
+
+        private async Task<ImportTierPriceMetadata> PrepareImportPricesForTierPricingDataAsync(IList<RoleDetail> RoleDetailList, int StoreId, IXLWorksheet worksheet)
+        {
+            var properties = GetPropertiesByExcelCells<TierPriceImport>(worksheet);
+            var manager = new PropertyManager<TierPriceImport>(properties, _catalogSettings);
+
+            var row = 2;
+
+            List<string> AllSku = new List<string>();
+            List<TierPriceImport> AllImportObject = new List<TierPriceImport>();
+
+            while (true)
+            {
+                var allColumnsAreEmpty = manager.GetProperties
+                    .Select(property => worksheet.Row(row).Cell(property.PropertyOrderPosition))
+                    .All(cell => string.IsNullOrEmpty(cell?.Value?.ToString()));
+
+                if (allColumnsAreEmpty)
+                    break;
+
+
+                manager.ReadFromXlsx(worksheet, row);
+                
+                TierPriceImport ImportObject = new TierPriceImport();
+
+                foreach (var property in manager.GetProperties)
+                {
+                    var value = property.PropertyValue;
+                    switch (property.PropertyName)
+                    {
+                        case "Item Name":
+                            ImportObject.Name = property.StringValue;
+                            break;
+                        case "Item Number":
+                            ImportObject.SKU = property.StringValue;
+                            AllSku.Add(property.StringValue);
+                            break;
+                        case "Web Store Price":
+                            ImportObject.ProductPrice = (decimal)property.DoubleValue;
+                            break;
+                        case "Price Level A, Qty Break 1":
+                            ImportObject.PriceForTireOne = property.DoubleValue;
+                            ImportObject.RoleForTireOne = RoleDetailList.FirstOrDefault(i => i.Column == property.PropertyName).Role;
+                            break;
+                        case "Price Level B, Qty Break 1":
+                            ImportObject.PriceForTireTwo = property.DoubleValue;
+                            ImportObject.RoleForTireTwo = RoleDetailList.FirstOrDefault(i => i.Column == property.PropertyName).Role;
+                            break;
+                        case "Price Level C, Qty Break 1":
+                            ImportObject.PriceForTireThree = property.DoubleValue;
+                            ImportObject.RoleForTireThree = RoleDetailList.FirstOrDefault(i => i.Column == property.PropertyName).Role;
+                            break;
+                        case "Price Level D, Qty Break 1":
+                            ImportObject.PriceForTireFour = property.DoubleValue;
+                            ImportObject.RoleForTireFour = RoleDetailList.FirstOrDefault(i => i.Column == property.PropertyName).Role;
+                            break;
+                        case "Price Level E, Qty Break 1":
+                            ImportObject.PriceForTireFive = property.DoubleValue;
+                            ImportObject.RoleForTireFive = RoleDetailList.FirstOrDefault(i => i.Column == property.PropertyName).Role;
+                            break;
+                        case "Price Level F, Qty Break 1":
+                            ImportObject.PriceForTireSix = property.DoubleValue;
+                            ImportObject.RoleForTireSix = RoleDetailList.FirstOrDefault(i => i.Column == property.PropertyName).Role;
+                            break;
+                    }
+                }
+                
+                AllImportObject.Add(ImportObject);
+                row++;
+            }
+
+            var allProductsBySku = await _productService.GetProductsBySkuAsync(AllSku.ToArray(), (await _workContext.GetCurrentVendorAsync())?.Id ?? 0);
+
+            return new ImportTierPriceMetadata {
+                Properties = properties,
+                Manager = manager,
+                ProductList = allProductsBySku,
+                ImportTierPriceList = AllImportObject,
+                ProductsInFile = allProductsBySku.Count
+            };
+        }
+        
         #endregion
 
         #region Methods
@@ -2680,6 +2799,106 @@ namespace Nop.Services.ExportImport
             }
 
             throw new ArgumentException(string.Format(await _localizationService.GetResourceAsync("Admin.Catalog.Categories.Import.CategoriesArentImported"), string.Join(", ", categoriesName)));
+        }
+
+        /// <summary>
+        /// Import Tier Price from XLSX file
+        /// </summary>
+        /// <param name="stream">Stream</param>
+        /// <returns>A task that represents the asynchronous operation</returns>
+        public virtual async Task ImportTierPriceFromXlsxAsync(Stream stream, bool AllStore)
+        {
+            using var workbook = new XLWorkbook(stream);
+            // get the first worksheet in the workbook
+            var PriceWS = workbook.Worksheets.FirstOrDefault(i => i.Name == "Tiers"); // Worksheet For Prices
+            var RoleWS = workbook.Worksheets.FirstOrDefault(i => i.Name == "Roles"); // Worksheet For Roles
+
+            if (PriceWS == null)
+                throw new NopException("No worksheet found");
+            if (RoleWS == null)
+                throw new NopException("Role worksheet found");
+
+            var AllCustomerRoles = await _customerService.GetAllCustomerRolesAsync();
+            int StoreId = AllStore != true ? _storeContext.GetCurrentStore().Id : 0;
+
+            var RoleMetaData = PrepareImportRolesForTierPricingDataAsync(RoleWS);
+            var PriceMetaData = await PrepareImportPricesForTierPricingDataAsync(RoleMetaData.RoleDetails, StoreId, PriceWS);
+
+            var TotalRecordsInserted = 1;
+
+            List<TierPrice> NewDataTiresList = new List<TierPrice>();
+            List<TierPrice> UpdateDataTiresList = new List<TierPrice>();
+
+            List<Product> UpdateProductList = new List<Product>();
+
+            foreach (var product in PriceMetaData.ProductList)
+            {
+                var ProductTierPricesDB = await _productService.GetTierPricesByProductAsync(product.Id);
+                var TirePriceObject = PriceMetaData.ImportTierPriceList.FirstOrDefault(i => i.SKU == product.Sku);
+                
+                if(TirePriceObject == null) continue;
+
+                List<TirePriceListObject> ListForTirePrices = new List<TirePriceListObject>();
+                ListForTirePrices.Add(new TirePriceListObject(TirePriceObject.PriceForTireOne, TirePriceObject.RoleForTireOne));
+                ListForTirePrices.Add(new TirePriceListObject(TirePriceObject.PriceForTireTwo, TirePriceObject.RoleForTireTwo));
+                ListForTirePrices.Add(new TirePriceListObject(TirePriceObject.PriceForTireThree, TirePriceObject.RoleForTireThree));
+                ListForTirePrices.Add(new TirePriceListObject(TirePriceObject.PriceForTireFour, TirePriceObject.RoleForTireFour));
+                ListForTirePrices.Add(new TirePriceListObject(TirePriceObject.PriceForTireFive, TirePriceObject.RoleForTireFive));
+                ListForTirePrices.Add(new TirePriceListObject(TirePriceObject.PriceForTireSix, TirePriceObject.RoleForTireSix));
+
+                foreach (var Tire in ListForTirePrices)
+                {
+                    var RoleId = AllCustomerRoles.FirstOrDefault(i => i.Name == Tire.Role).Id; 
+                    var tierPrice = ProductTierPricesDB.FirstOrDefault(i => i.CustomerRoleId == RoleId && i.StoreId == StoreId);
+
+                    var isNew = tierPrice == null;
+
+                    tierPrice ??= new TierPrice();
+
+                    if (isNew)
+                    {
+                        tierPrice.ProductId = product.Id;
+                        tierPrice.StoreId = StoreId;
+                        tierPrice.CustomerRoleId = RoleId;
+                        tierPrice.Quantity = 1;
+                        tierPrice.Price = (decimal)Tire.Price;
+
+                        await _productService.InsertTierPriceAsync(tierPrice);
+                        // NewDataTiresList.Add(tierPrice);
+                    }else{
+                        if(tierPrice.Price != (decimal)Tire.Price){
+                            tierPrice.Price = (decimal)Tire.Price;
+                            await _productService.UpdateTierPriceAsync(tierPrice);
+                            // UpdateDataTiresList.Add(tierPrice);
+                        }
+                    }
+                }
+
+                var ProductUpdate = false;
+                
+                if(product.Price != TirePriceObject.ProductPrice){
+                    product.Price = TirePriceObject.ProductPrice;
+                    ProductUpdate = true;
+                }
+                if(product.HasTierPrices == false){
+                    product.HasTierPrices = true;
+                    ProductUpdate = true;
+                }
+
+                if(ProductUpdate == true) await _productService.UpdateProductAsync(product);
+
+
+                TotalRecordsInserted++;
+            }
+
+            // if(NewDataTiresList.Count != 0) await _productService.InsertTierPriceAsync(NewDataTiresList);
+            // if(UpdateDataTiresList.Count != 0) await _productService.UpdateTierPriceAsync(UpdateDataTiresList);
+            // if(UpdateProductList.Count != 0) await _productService.UpdateProductAsync(UpdateProductList);
+
+            // activity log
+            System.Console.WriteLine("Products Tier Prices been set = {0}", TotalRecordsInserted);
+            await _customerActivityService.InsertActivityAsync("ImportProductTierPrice",
+                string.Format(await _localizationService.GetResourceAsync("activitylog.importTierPrice"), TotalRecordsInserted));
         }
 
         #endregion

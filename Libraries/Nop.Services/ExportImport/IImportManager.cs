@@ -56,5 +56,12 @@ namespace Nop.Services.ExportImport
         /// <param name="stream">Stream</param>
         /// <returns>A task that represents the asynchronous operation</returns>
         Task ImportCategoriesFromXlsxAsync(Stream stream);
+
+        /// <summary>
+        /// Import Tier Price from XLSX file
+        /// </summary>
+        /// <param name="stream">Stream</param>
+        /// <returns>A task that represents the asynchronous operation</returns>
+        Task ImportTierPriceFromXlsxAsync(Stream stream, bool AllStore);
     }
 }

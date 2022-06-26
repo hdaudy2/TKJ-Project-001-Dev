@@ -86,6 +86,13 @@
                         <i class="fas fa-upload"></i>
                         @T("Admin.Common.ImportProduct")
                     </button>
+
+                    //a vendor cannot import Tier Price
+                    //Tier Pricing Import
+                    <button type="button" name="importexcel" class="btn bg-olive" data-toggle="modal" data-target="#importtierpriceexcel-window">
+                        <i class="fas fa-upload"></i>
+                        @T("Admin.Common.ImportTierPrice")
+                    </button>
                 }
                 <button type="button" id="delete-selected" class="btn btn-danger">
                     <i class="far fa-trash-alt"></i>
@@ -371,6 +378,57 @@
                                 <div class="col-md-10">
                                     <input type="file" id="importexcelfile" name="importexcelfile" class="form-control" />
                                     <input type="text" id="importType" name="importType" value="product" class="form-control" style="display: none;"/>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="submit" class="btn btn-primary">
+                                @T("Admin.Common.ImportFromExcel")
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    @*import Product Tier Price form*@
+    <div id="importtierpriceexcel-window" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="importtierpriceexcel-window-title">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h4 class="modal-title" id="importexcel-window-title">@T("Admin.Common.ImportTierPriceFromExcel")</h4>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>                    
+                </div>
+                <form asp-controller="Product" asp-action="ImportExcel" method="post" enctype="multipart/form-data">
+                    <div class="form-horizontal">
+                        <div class="modal-body">
+                            <ul class="common-list">
+                                <li>
+                                    <em>@T("Admin.Catalog.Products.List.ImportFromExcelTip")</em>
+                                </li>
+                                <li>
+                                    <em>@T("Admin.Common.ImportFromExcel.ManyRecordsWarning")</em>
+                                </li>
+                            </ul>
+                            <div class="form-group row">
+                                <div class="col-md-2">
+                                    <div class="label-wrapper">
+                                        <label class="col-form-label">
+                                            @T("Admin.Common.ExcelFile")
+                                        </label>
+                                    </div>
+                                </div>
+                                <div class="col-md-10">
+                                    <input type="file" id="importexcelfile" name="importexcelfile" class="form-control" />
+                                    @if(false)
+                                    {
+                                        <label class="col-form-label" name="allStore">
+                                            <input type="checkbox" id="allStore" name="allStore" value="false" disabled/>
+                                            <span style="margin-left: 5px">All Stores</span>
+                                        </label> 
+                                    }
+                                    <input type="text" id="importType" name="importType" value="tierPrice" class="form-control" style="display: none;"/>
                                 </div>
                             </div>
                         </div>

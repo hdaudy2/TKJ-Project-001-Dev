@@ -2393,6 +2393,7 @@ namespace Nop.Web.Areas.Admin.Controllers
                 if (importexcelfile != null && importexcelfile.Length > 0)
                 {
                     if(importType == "product") await _importManager.FormatProductXlsxToImport(importexcelfile.OpenReadStream());
+                    else if (importType == "tierPrice") await _importManager.ImportTierPriceFromXlsxAsync(importexcelfile.OpenReadStream(), allStore);
                 }
                 else
                 {
@@ -2402,7 +2403,8 @@ namespace Nop.Web.Areas.Admin.Controllers
                 }
 
                 if (importType == "product") _notificationService.SuccessNotification(await _localizationService.GetResourceAsync("Admin.Catalog.Products.Imported"));
-                
+                else if (importType == "tierPrice") _notificationService.SuccessNotification(await _localizationService.GetResourceAsync("Admin.Catalog.Products.TierPrices.Imported"));
+
                 return RedirectToAction("List");
             }
             catch (Exception exc)
