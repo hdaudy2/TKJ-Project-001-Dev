@@ -30,11 +30,11 @@
                     <div class="title">
                         <a href="@Url.RouteUrl("Category", new {item.CategoryModel.SeName})" title="@item.CategoryModel.Name"><span>@item.CategoryModel.Name</span></a>
                     </div>
-                    <div class="picture">
+                    @* <div class="picture">
                         <a href="@Url.RouteUrl("Category", new {item.CategoryModel.SeName})" title="@item.CategoryModel.PictureModel.Title">
                             <img class="lazy" alt="@item.CategoryModel.PictureModel.AlternateText" src="data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==" data-original="@item.CategoryModel.PictureModel.ImageUrl" />
                         </a>
-                    </div>
+                    </div> *@
                 </div>
                 @if (item.SubCategories.Count > 0)
                 {
