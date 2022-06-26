@@ -51,6 +51,7 @@
 .picture-slide img {
     width: 100%;
 	display: none;
+    height: 280px;
 }
 .first-slide img {
     display: block;
@@ -73,6 +74,11 @@
 }
 .anywhere-slider .slick-track {
     background-color: #fff;
+    height: 280px;
+    max-height: 280px;
+    width: 100%;
+    padding-right: 0px;
+    background-size: cover;
 }
 .anywhere-slider > .picture-slide {
     position: relative;

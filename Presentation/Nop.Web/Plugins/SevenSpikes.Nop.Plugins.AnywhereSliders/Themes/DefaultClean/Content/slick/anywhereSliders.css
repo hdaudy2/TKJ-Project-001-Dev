@@ -11,6 +11,7 @@
 .picture-slide img {
     width: 100%;
     display: none;
+    height: 280px;
 }
 .first-slide img {
     display: block;
