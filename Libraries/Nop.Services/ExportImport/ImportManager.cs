@@ -1245,6 +1245,379 @@ namespace Nop.Services.ExportImport
         }
 
         /// <summary>
+        /// Foramt product XLSX file for Importing process 
+        /// </summary>
+        /// <param name="stream">Stream</param>
+        /// <returns>A task that represents the asynchronous operation</returns>
+        public virtual async Task FormatProductXlsxToImport(Stream stream)
+        {
+            using var workbook = new XLWorkbook(stream);
+            // get the first worksheet in the workbook
+            var worksheet = workbook.Worksheets.FirstOrDefault();
+            if (worksheet == null)
+                throw new NopException("No worksheet found");
+
+            var properties = GetPropertiesByExcelCells<Product>(worksheet);
+
+            if (properties.SingleOrDefault(i => i.PropertyName == "Title en") == null)
+            {
+                await ImportProductsFromXlsxAsync(stream);
+                return;
+            }
+
+            var manager = new PropertyManager<Product>(properties, _catalogSettings);
+            var URL = "https://www.premacanada.ca";
+
+            var AllCategories = await _categoryService.GetAllCategoriesAsync();
+
+            List<ProductImportModel> ProductsInXlsx = new List<ProductImportModel>();
+
+            var iRow = 2;
+
+            while (true)
+            {
+                var allColumnsAreEmpty = manager.GetProperties
+                    .Select(property => worksheet.Row(iRow).Cell(property.PropertyOrderPosition))
+                    .All(cell => cell?.Value == null || string.IsNullOrEmpty(cell.Value.ToString()));
+
+                if (allColumnsAreEmpty)
+                    break;
+
+                manager.ReadFromXlsx(worksheet, iRow);
+
+                var product = new ProductImportModel();
+
+                foreach (var property in manager.GetProperties)
+                {
+                    var category = new Category();
+                    switch (property.PropertyName)
+                    {
+                        case "Title en":
+                            product.Name = property.StringValue;
+                            break;
+                        case "Description Small en":
+                            product.ShortDescription = property.StringValue;
+                            break;
+                        case "Description Default en":
+                            product.FullDescription = property.StringValue;
+                            break;
+                        case "Status":
+                            product.Published = property.StringValue == "Enable";
+                            break;
+                        case "Code":
+                            product.SKU = property.StringValue;
+                            break;
+                        case "Quantity minimum":
+                            product.OrderMinimumQuantity = property.IntValue;
+                            break;
+                        case "Weight Kg":
+                            product.Weight = property.DecimalValue;
+                            break;
+                        case "Length Cm":
+                            product.Length = property.DecimalValue;
+                            break;
+                        case "Width Cm":
+                            product.Width = property.DecimalValue;
+                            break;
+                        case "Height Cm":
+                            product.Height = property.DecimalValue;
+                            break;
+                        case "Brand":
+                            product.Manufacturers = property.StringValue + ";";
+                            break;
+                        case "Description MetaDescription en":
+                            if (property.StringValue == null || property.StringValue == "") break;
+                            product.MetaDescription = property.StringValue + ";";
+                            break;
+                        case "Description MetaKeywords en":
+                            if (property.StringValue == null || property.StringValue == "") break;
+                            product.MetaKeywords = property.StringValue + ";";
+                            break;
+                        case "Description PageTitle en":
+                            if (property.StringValue == null || property.StringValue == "") break;
+                            product.MetaTitle = property.StringValue + ";";
+                            break;
+                        case "Category 1":
+                            if (property.StringValue != "")
+                            {
+                                category = AllCategories.SingleOrDefault(i => i.CodeId == property.StringValue.Trim());
+                                if (category != null) product.Categories += category.Id + ";";
+                            }
+                            break;
+                        case "Category 2":
+                            if (property.StringValue != "")
+                            {
+                                category = AllCategories.SingleOrDefault(i => i.CodeId == property.StringValue.Trim());
+                                if (category != null) product.Categories += category.Id + ";";
+                            }
+                            break;
+                        case "Category 3":
+                            if (property.StringValue != "")
+                            {
+                                category = AllCategories.SingleOrDefault(i => i.CodeId == property.StringValue.Trim());
+                                if (category != null) product.Categories += category.Id + ";";
+                            }
+                            break;
+                        case "Category 4":
+                            if (property.StringValue != "")
+                            {
+                                category = AllCategories.SingleOrDefault(i => i.CodeId == property.StringValue.Trim());
+                                if (category != null) product.Categories += category.Id + ";";
+                            }
+                            break;
+                        case "Picture 1 Large":
+                            if (property.StringValue == null || property.StringValue == "") break;
+                            product.Picture1 = URL + property.StringValue;
+                            break;
+                        case "Picture 2 Large":
+                            if (property.StringValue == null || property.StringValue == "") break;
+                            product.Picture2 = URL + property.StringValue;
+                            break;
+                        case "Picture 3 Large":
+                            if (property.StringValue == null || property.StringValue == "") break;
+                            product.Picture3 = URL + property.StringValue;
+                            break;
+                        case "Complementary 1":
+                            if (property.StringValue == null || property.StringValue == "") break;
+                            product.RelatedProducts += property.StringValue + ";";
+                            break;
+                        case "Complementary 2":
+                            if (property.StringValue == null || property.StringValue == "") break;
+                            product.RelatedProducts += property.StringValue + ";";
+                            break;
+                        case "Complementary 3":
+                            if (property.StringValue == null || property.StringValue == "") break;
+                            product.RelatedProducts += property.StringValue + ";";
+                            break;
+                        case "Complementary 4":
+                            if (property.StringValue == null || property.StringValue == "") break;
+                            product.RelatedProducts += property.StringValue + ";";
+                            break;
+                        case "Complementary 5":
+                            if (property.StringValue == null || property.StringValue == "") break;
+                            product.RelatedProducts += property.StringValue + ";";
+                            break;
+                        case "Complementary 6":
+                            if (property.StringValue == null || property.StringValue == "") break;
+                            product.RelatedProducts += property.StringValue + ";";
+                            break;
+                        case "Complementary 7":
+                            if (property.StringValue == null || property.StringValue == "") break;
+                            product.RelatedProducts += property.StringValue + ";";
+                            break;
+                        case "Complementary 8":
+                            if (property.StringValue == null || property.StringValue == "") break;
+                            product.RelatedProducts += property.StringValue + ";";
+                            break;
+                        case "Complementary 9":
+                            if (property.StringValue == null || property.StringValue == "") break;
+                            product.RelatedProducts += property.StringValue + ";";
+                            break;
+                        case "Complementary 10":
+                            if (property.StringValue == null || property.StringValue == "") break;
+                            product.RelatedProducts += property.StringValue + ";";
+                            break;
+                        case "Complementary 11":
+                            if (property.StringValue == null || property.StringValue == "") break;
+                            product.RelatedProducts += property.StringValue + ";";
+                            break;
+                        case "Complementary 12":
+                            if (property.StringValue == null || property.StringValue == "") break;
+                            product.RelatedProducts += property.StringValue + ";";
+                            break;
+                        case "Complementary 13":
+                            if (property.StringValue == null || property.StringValue == "") break;
+                            product.RelatedProducts += property.StringValue + ";";
+                            break;
+                    }
+                }
+
+                if (true)
+                {
+                    product.ProductType = 5;
+                    product.ParentGroupedProductId = 0;
+                    product.VisibleIndividually = true;
+                    product.Vendor = 0;
+                    product.ProductTemplate = 0;
+                    product.ShowOnHomepage = false;
+                    product.DisplayOrder = 0;
+                    product.AllowCustomerReviews = false;
+                    product.ManufacturerPartNumber = "";
+                    product.Gtin = "";
+                    product.IsGiftCard = false;
+                    product.GiftCardType = 0;
+                    product.OverriddenGiftCardAmount = "";
+                    product.RequireOtherProducts = false;
+                    product.RequiredProductIds = "";
+                    product.AutomaticallyAddRequiredProducts = false;
+                    product.IsDownload = false;
+                    product.DownloadId = 0;
+                    product.UnlimitedDownloads = false;
+                    product.MaxNumberOfDownloads = 0;
+                    product.DownloadActivationType = 0;
+                    product.HasSampleDownload = false;
+                    product.SampleDownloadId = 0;
+                    product.HasUserAgreement = false;
+                    product.UserAgreementText = "";
+                    product.IsRecurring = false;
+                    product.RecurringCycleLength = 0;
+                    product.RecurringCyclePeriod = 0;
+                    product.RecurringTotalCycles = 0;
+                    product.IsRental = false;
+                    product.RentalPriceLength = 0;
+                    product.RentalPricePeriod = 0;
+                    product.IsShipEnabled = true;
+                    product.IsFreeShipping = false;
+                    product.ShipSeparately = false;
+                    product.AdditionalShippingCharge = 0;
+                    product.DeliveryDate = 0;
+                    product.IsTaxExempt = false;
+                    product.TaxCategory = 0;
+                    product.IsTelecommunicationsOrBroadcastingOrElectronicServices = false;
+                    product.ManageInventoryMethod = 1;
+                    product.ProductAvailabilityRange = 0;
+                    product.UseMultipleWarehouses = false;
+                    product.WarehouseId = 0;
+                    product.StockQuantity = 100;
+                    product.DisplayStockAvailability = false;
+                    product.DisplayStockQuantity = false;
+                    product.MinStockQuantity = 0;
+                    product.LowStockActivity = 0;
+                    product.NotifyAdminForQuantityBelow = 0;
+                    product.BackorderMode = 0;
+                    product.AllowBackInStockSubscriptions = false;
+                    product.OrderMaximumQuantity = 1000;
+                    product.AllowedQuantities = "";
+                    product.AllowAddingOnlyExistingAttributeCombinations = false;
+                    product.NotReturnable = false;
+                    product.DisableBuyButton = false;
+                    product.DisableWishlistButton = false;
+                    product.AvailableForPreOrder = false;
+                    product.PreOrderAvailabilityStartDateTimeUtc = "";
+                    product.CallForPrice = false;
+                    product.Price = 0;
+                    product.OldPrice = 0;
+                    product.ProductCost = 0;
+                    product.CustomerEntersPrice = false;
+                    product.MinimumCustomerEnteredPrice = 0;
+                    product.MaximumCustomerEnteredPrice = 0;
+                    product.BasepriceEnabled = false;
+                    product.BasepriceAmount = 0;
+                    product.BasepriceUnit = 0;
+                    product.BasepriceBaseAmount = 0;
+                    product.BasepriceBaseUnit = 0;
+                    product.MarkAsNew = false;
+                    product.MarkAsNewStartDateTimeUtc = "";
+                    product.MarkAsNewEndDateTimeUtc = "";
+                    product.ProductTags = "";
+                }
+                ProductsInXlsx.Add(product);
+                iRow++;
+            }
+            var ExportProperties = new[]
+            {
+                new PropertyByName<ProductImportModel>("ProductType", p => p.ProductType),
+                new PropertyByName<ProductImportModel>("ParentGroupedProductId", p => p.ParentGroupedProductId),
+                new PropertyByName<ProductImportModel>("VisibleIndividually", p => p.VisibleIndividually),
+                new PropertyByName<ProductImportModel>("Name", p => p.Name),
+                new PropertyByName<ProductImportModel>("ShortDescription", p => p.ShortDescription),
+                new PropertyByName<ProductImportModel>("FullDescription", p => p.FullDescription),
+                new PropertyByName<ProductImportModel>("Vendor", p => p.Vendor),
+                new PropertyByName<ProductImportModel>("ProductTemplate", p => p.ProductTemplate),
+                new PropertyByName<ProductImportModel>("ShowOnHomepage", p => p.ShowOnHomepage),
+                new PropertyByName<ProductImportModel>("DisplayOrder", p => p.DisplayOrder),
+                new PropertyByName<ProductImportModel>("MetaKeywords", p => p.MetaKeywords),
+                new PropertyByName<ProductImportModel>("MetaDescription", p => p.MetaDescription),
+                new PropertyByName<ProductImportModel>("MetaTitle", p => p.MetaTitle),
+                new PropertyByName<ProductImportModel>("SeName", p => p.SeName),
+                new PropertyByName<ProductImportModel>("AllowCustomerReviews", p => p.AllowCustomerReviews),
+                new PropertyByName<ProductImportModel>("Published", p => p.Published),
+                new PropertyByName<ProductImportModel>("SKU", p => p.SKU),
+                new PropertyByName<ProductImportModel>("ManufacturerPartNumber", p => p.ManufacturerPartNumber),
+                new PropertyByName<ProductImportModel>("Gtin", p => p.Gtin),
+                new PropertyByName<ProductImportModel>("IsGiftCard", p => p.IsGiftCard),
+                new PropertyByName<ProductImportModel>("GiftCardType", p => p.GiftCardType),
+                new PropertyByName<ProductImportModel>("OverriddenGiftCardAmount", p => p.OverriddenGiftCardAmount),
+                new PropertyByName<ProductImportModel>("RequireOtherProducts", p => p.RequireOtherProducts),
+                new PropertyByName<ProductImportModel>("RequiredProductIds", p => p.RequiredProductIds),
+                new PropertyByName<ProductImportModel>("AutomaticallyAddRequiredProducts", p => p.AutomaticallyAddRequiredProducts),
+                new PropertyByName<ProductImportModel>("IsDownload", p => p.IsDownload),
+                new PropertyByName<ProductImportModel>("DownloadId", p => p.DownloadId),
+                new PropertyByName<ProductImportModel>("UnlimitedDownloads", p => p.UnlimitedDownloads),
+                new PropertyByName<ProductImportModel>("MaxNumberOfDownloads", p => p.MaxNumberOfDownloads),
+                new PropertyByName<ProductImportModel>("DownloadActivationType", p => p.DownloadActivationType),
+                new PropertyByName<ProductImportModel>("HasSampleDownload", p => p.HasSampleDownload),
+                new PropertyByName<ProductImportModel>("SampleDownloadId", p => p.SampleDownloadId),
+                new PropertyByName<ProductImportModel>("HasUserAgreement", p => p.HasUserAgreement),
+                new PropertyByName<ProductImportModel>("UserAgreementText", p => p.UserAgreementText),
+                new PropertyByName<ProductImportModel>("IsRecurring", p => p.IsRecurring),
+                new PropertyByName<ProductImportModel>("RecurringCycleLength", p => p.RecurringCycleLength),
+                new PropertyByName<ProductImportModel>("RecurringCyclePeriod", p => p.RecurringCyclePeriod),
+                new PropertyByName<ProductImportModel>("RecurringTotalCycles", p => p.RecurringTotalCycles),
+                new PropertyByName<ProductImportModel>("IsRental", p => p.IsRental),
+                new PropertyByName<ProductImportModel>("RentalPriceLength", p => p.RentalPriceLength),
+                new PropertyByName<ProductImportModel>("RentalPricePeriod", p => p.RentalPricePeriod),
+                new PropertyByName<ProductImportModel>("IsShipEnabled", p => p.IsShipEnabled),
+                new PropertyByName<ProductImportModel>("IsFreeShipping", p => p.IsFreeShipping),
+                new PropertyByName<ProductImportModel>("ShipSeparately", p => p.ShipSeparately),
+                new PropertyByName<ProductImportModel>("AdditionalShippingCharge", p => p.AdditionalShippingCharge),
+                new PropertyByName<ProductImportModel>("DeliveryDate", p => p.DeliveryDate),
+                new PropertyByName<ProductImportModel>("IsTaxExempt", p => p.IsTaxExempt),
+                new PropertyByName<ProductImportModel>("TaxCategory", p => p.TaxCategory),
+                new PropertyByName<ProductImportModel>("IsTelecommunicationsOrBroadcastingOrElectronicServices", p => p.IsTelecommunicationsOrBroadcastingOrElectronicServices),
+                new PropertyByName<ProductImportModel>("ManageInventoryMethod", p => p.ManageInventoryMethod),
+                new PropertyByName<ProductImportModel>("ProductAvailabilityRange", p => p.ProductAvailabilityRange),
+                new PropertyByName<ProductImportModel>("UseMultipleWarehouses", p => p.UseMultipleWarehouses),
+                new PropertyByName<ProductImportModel>("WarehouseId", p => p.WarehouseId),
+                new PropertyByName<ProductImportModel>("StockQuantity", p => p.StockQuantity),
+                new PropertyByName<ProductImportModel>("DisplayStockAvailability", p => p.DisplayStockAvailability),
+                new PropertyByName<ProductImportModel>("DisplayStockQuantity", p => p.DisplayStockQuantity),
+                new PropertyByName<ProductImportModel>("MinStockQuantity", p => p.MinStockQuantity),
+                new PropertyByName<ProductImportModel>("LowStockActivity", p => p.LowStockActivity),
+                new PropertyByName<ProductImportModel>("NotifyAdminForQuantityBelow", p => p.NotifyAdminForQuantityBelow),
+                new PropertyByName<ProductImportModel>("BackorderMode", p => p.BackorderMode),
+                new PropertyByName<ProductImportModel>("AllowBackInStockSubscriptions", p => p.AllowBackInStockSubscriptions),
+                new PropertyByName<ProductImportModel>("OrderMinimumQuantity", p => p.OrderMinimumQuantity),
+                new PropertyByName<ProductImportModel>("OrderMaximumQuantity", p => p.OrderMaximumQuantity),
+                new PropertyByName<ProductImportModel>("AllowedQuantities", p => p.AllowedQuantities),
+                new PropertyByName<ProductImportModel>("AllowAddingOnlyExistingAttributeCombinations", p => p.AllowAddingOnlyExistingAttributeCombinations),
+                new PropertyByName<ProductImportModel>("NotReturnable", p => p.NotReturnable),
+                new PropertyByName<ProductImportModel>("DisableBuyButton", p => p.DisableBuyButton),
+                new PropertyByName<ProductImportModel>("DisableWishlistButton", p => p.DisableWishlistButton),
+                new PropertyByName<ProductImportModel>("AvailableForPreOrder", p => p.AvailableForPreOrder),
+                new PropertyByName<ProductImportModel>("PreOrderAvailabilityStartDateTimeUtc", p => p.PreOrderAvailabilityStartDateTimeUtc),
+                new PropertyByName<ProductImportModel>("CallForPrice", p => p.CallForPrice),
+                new PropertyByName<ProductImportModel>("Price", p => p.Price),
+                new PropertyByName<ProductImportModel>("OldPrice", p => p.OldPrice),
+                new PropertyByName<ProductImportModel>("ProductCost", p => p.ProductCost),
+                new PropertyByName<ProductImportModel>("CustomerEntersPrice", p => p.CustomerEntersPrice),
+                new PropertyByName<ProductImportModel>("MinimumCustomerEnteredPrice", p => p.MinimumCustomerEnteredPrice),
+                new PropertyByName<ProductImportModel>("MaximumCustomerEnteredPrice", p => p.MaximumCustomerEnteredPrice),
+                new PropertyByName<ProductImportModel>("BasepriceEnabled", p => p.BasepriceEnabled),
+                new PropertyByName<ProductImportModel>("BasepriceAmount", p => p.BasepriceAmount),
+                new PropertyByName<ProductImportModel>("BasepriceUnit", p => p.BasepriceUnit),
+                new PropertyByName<ProductImportModel>("BasepriceBaseAmount", p => p.BasepriceBaseAmount),
+                new PropertyByName<ProductImportModel>("BasepriceBaseUnit", p => p.BasepriceBaseUnit),
+                new PropertyByName<ProductImportModel>("MarkAsNew", p => p.MarkAsNew),
+                new PropertyByName<ProductImportModel>("MarkAsNewStartDateTimeUtc", p => p.MarkAsNewStartDateTimeUtc),
+                new PropertyByName<ProductImportModel>("MarkAsNewEndDateTimeUtc", p => p.MarkAsNewEndDateTimeUtc),
+                new PropertyByName<ProductImportModel>("Weight", p => p.Weight),
+                new PropertyByName<ProductImportModel>("Length", p => p.Length),
+                new PropertyByName<ProductImportModel>("Width", p => p.Width),
+                new PropertyByName<ProductImportModel>("Height", p => p.Height),
+                new PropertyByName<ProductImportModel>("Categories", p => p.Categories),
+                new PropertyByName<ProductImportModel>("Manufacturers", p => p.Manufacturers),
+                new PropertyByName<ProductImportModel>("RelatedProducts", p => p.RelatedProducts),
+                new PropertyByName<ProductImportModel>("ProductTags", p => p.ProductTags),
+                new PropertyByName<ProductImportModel>("Picture1", p => p.Picture1),
+                new PropertyByName<ProductImportModel>("Picture2", p => p.Picture2),
+                new PropertyByName<ProductImportModel>("Picture3", p => p.Picture3),
+            };
+            var newStream = new MemoryStream(await new PropertyManager<ProductImportModel>(ExportProperties, _catalogSettings).ExportToXlsxAsync(ProductsInXlsx));
+            await ImportProductsFromXlsxAsync(newStream);
+        }
+
+        /// <summary>
         /// Import products from XLSX file
         /// </summary>
         /// <param name="stream">Stream</param>
@@ -2380,6 +2753,106 @@ namespace Nop.Services.ExportImport
                 var other = obj as CategoryKey;
                 return other?.Equals(other) ?? false;
             }
+        }
+
+        public partial class ProductImportModel
+        {
+            public int ProductType { get; set; }
+            public int ParentGroupedProductId { get; set; }
+            public Boolean VisibleIndividually { get; set; }
+            public int Vendor { get; set; }
+            public int ProductTemplate { get; set; }
+            public Boolean ShowOnHomepage { get; set; }
+            public int DisplayOrder { get; set; }
+            public string MetaKeywords { get; set; }
+            public string MetaDescription { get; set; }
+            public string MetaTitle { get; set; }
+            public Boolean AllowCustomerReviews { get; set; }
+            public string ManufacturerPartNumber { get; set; }
+            public string Gtin { get; set; }
+            public Boolean IsGiftCard { get; set; }
+            public int GiftCardType { get; set; }
+            public string OverriddenGiftCardAmount { get; set; }
+            public Boolean RequireOtherProducts { get; set; }
+            public string RequiredProductIds { get; set; }
+            public Boolean AutomaticallyAddRequiredProducts { get; set; }
+            public Boolean IsDownload { get; set; }
+            public int DownloadId { get; set; }
+            public Boolean UnlimitedDownloads { get; set; }
+            public int MaxNumberOfDownloads { get; set; }
+            public int DownloadActivationType { get; set; }
+            public Boolean HasSampleDownload { get; set; }
+            public int SampleDownloadId { get; set; }
+            public Boolean HasUserAgreement { get; set; }
+            public string UserAgreementText { get; set; }
+            public Boolean IsRecurring { get; set; }
+            public int RecurringCycleLength { get; set; }
+            public int RecurringCyclePeriod { get; set; }
+            public int RecurringTotalCycles { get; set; }
+            public Boolean IsRental { get; set; }
+            public int RentalPriceLength { get; set; }
+            public int RentalPricePeriod { get; set; }
+            public Boolean IsShipEnabled { get; set; }
+            public Boolean IsFreeShipping { get; set; }
+            public Boolean ShipSeparately { get; set; }
+            public int AdditionalShippingCharge { get; set; }
+            public int DeliveryDate { get; set; }
+            public Boolean IsTaxExempt { get; set; }
+            public int TaxCategory { get; set; }
+            public Boolean IsTelecommunicationsOrBroadcastingOrElectronicServices { get; set; }
+            public int ManageInventoryMethod { get; set; }
+            public int ProductAvailabilityRange { get; set; }
+            public Boolean UseMultipleWarehouses { get; set; }
+            public int WarehouseId { get; set; }
+            public int StockQuantity { get; set; }
+            public Boolean DisplayStockAvailability { get; set; }
+            public Boolean DisplayStockQuantity { get; set; }
+            public int MinStockQuantity { get; set; }
+            public int LowStockActivity { get; set; }
+            public int NotifyAdminForQuantityBelow { get; set; }
+            public int BackorderMode { get; set; }
+            public Boolean AllowBackInStockSubscriptions { get; set; }
+            public int OrderMinimumQuantity { get; set; }
+            public int OrderMaximumQuantity { get; set; }
+            public string AllowedQuantities { get; set; }
+            public Boolean AllowAddingOnlyExistingAttributeCombinations { get; set; }
+            public Boolean NotReturnable { get; set; }
+            public Boolean DisableBuyButton { get; set; }
+            public Boolean DisableWishlistButton { get; set; }
+            public Boolean AvailableForPreOrder { get; set; }
+            public string PreOrderAvailabilityStartDateTimeUtc { get; set; }
+            public Boolean CallForPrice { get; set; }
+            public int Price { get; set; }
+            public int OldPrice { get; set; }
+            public int ProductCost { get; set; }
+            public Boolean CustomerEntersPrice { get; set; }
+            public int MinimumCustomerEnteredPrice { get; set; }
+            public int MaximumCustomerEnteredPrice { get; set; }
+            public Boolean BasepriceEnabled { get; set; }
+            public int BasepriceAmount { get; set; }
+            public int BasepriceUnit { get; set; }
+            public int BasepriceBaseAmount { get; set; }
+            public int BasepriceBaseUnit { get; set; }
+            public Boolean MarkAsNew { get; set; }
+            public string MarkAsNewStartDateTimeUtc { get; set; }
+            public string MarkAsNewEndDateTimeUtc { get; set; }
+            public string Manufacturers { get; set; }
+            public string ProductTags { get; set; }
+            public string Name { get; set; }
+            public string ShortDescription { get; set; }
+            public string FullDescription { get; set; }
+            public string SeName { get; set; }
+            public Boolean Published { get; set; }
+            public string SKU { get; set; }
+            public string Categories { get; set; }
+            public string Picture1 { get; set; }
+            public string Picture2 { get; set; }
+            public string Picture3 { get; set; }
+            public decimal Weight { get; set; }
+            public decimal Length { get; set; }
+            public decimal Width { get; set; }
+            public decimal Height { get; set; }
+            public string RelatedProducts { get; set; }
         }
 
         #endregion

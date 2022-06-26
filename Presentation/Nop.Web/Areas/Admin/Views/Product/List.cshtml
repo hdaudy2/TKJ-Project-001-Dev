@@ -1,4 +1,10 @@
 ﻿@model ProductSearchModel
+@using Nop.Core
+@using Nop.Services.Configuration
+@using Nop.Services.Customers
+
+@inject Nop.Core.IWorkContext _workContext
+@inject ICustomerService _customerService
 
 @using Nop.Core.Domain.Catalog;
 
@@ -11,6 +17,11 @@
 
 @{
     const string hideSearchBlockAttributeName = "ProductListPage.HideSearchBlock";
+    
+    var customer = await _workContext.GetCurrentCustomerAsync();
+    //Check is Administrator
+    var isAdmin = await _customerService.IsAdminAsync(customer);
+
     var hideSearchBlock = await genericAttributeService.GetAttributeAsync<bool>(await workContext.GetCurrentCustomerAsync(), hideSearchBlockAttributeName);
 }
 
@@ -70,9 +81,10 @@
                 @if (!Model.IsLoggedInAsVendor || Model.AllowVendorsToImportProducts)
                 {
                     //a vendor cannot import products
-                    <button type="button" name="importexcel" class="btn bg-olive" data-toggle="modal" data-target="#importexcel-window">
+                    //Product Import
+                    <button type="button" name="importexcel" class="btn bg-olive" data-toggle="modal" data-target="#importproductexcel-window">
                         <i class="fas fa-upload"></i>
-                        @T("Admin.Common.Import")
+                        @T("Admin.Common.ImportProduct")
                     </button>
                 }
                 <button type="button" id="delete-selected" class="btn btn-danger">
@@ -330,11 +342,11 @@
 </form>
 
     @*import products form*@
-    <div id="importexcel-window" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="importexcel-window-title">
+    <div id="importproductexcel-window" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="importproductexcel-window-title">
         <div class="modal-dialog">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h4 class="modal-title" id="importexcel-window-title">@T("Admin.Common.ImportFromExcel")</h4>
+                    <h4 class="modal-title" id="importexcel-window-title">@T("Admin.Common.ImportProductFromExcel")</h4>
                     <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>                    
                 </div>
                 <form asp-controller="Product" asp-action="ImportExcel" method="post" enctype="multipart/form-data">
@@ -358,6 +370,7 @@
                                 </div>
                                 <div class="col-md-10">
                                     <input type="file" id="importexcelfile" name="importexcelfile" class="form-control" />
+                                    <input type="text" id="importType" name="importType" value="product" class="form-control" style="display: none;"/>
                                 </div>
                             </div>
                         </div>
