@@ -612,13 +612,16 @@ namespace Nop.Services.ExportImport
         /// <returns>A task that represents the asynchronous operation</returns>
         protected virtual async Task SaveCategoryAsync(bool isNew, Category category, Dictionary<string, ValueTask<Category>> allCategories, string curentCategoryBreadCrumb, bool setSeName, string seName)
         {
+            var customer = await _workContext.GetCurrentCustomerAsync();
+            var IsLimitedToStores = !await _customerService.IsAdminAsync(customer);
+
             #region Multi-Tenant Plugin
             var _storeMappingService = Nop.Core.Infrastructure.EngineContext.Current.Resolve<Nop.Services.Stores.IStoreMappingService>();
             #endregion
 
             if (isNew){
                 #region Multi-Tenant Plugin
-                category.LimitedToStores = true;
+                category.LimitedToStores = IsLimitedToStores;
                 #endregion
                 
                 await _categoryService.InsertCategoryAsync(category);
@@ -1391,6 +1394,9 @@ namespace Nop.Services.ExportImport
 
             List<ProductImportModel> ProductsInXlsx = new List<ProductImportModel>();
 
+            var customer = await _workContext.GetCurrentCustomerAsync();
+            var IsLimitedToStores = !await _customerService.IsAdminAsync(customer);
+
             var iRow = 2;
 
             while (true)
@@ -1629,6 +1635,7 @@ namespace Nop.Services.ExportImport
                     product.MarkAsNewStartDateTimeUtc = "";
                     product.MarkAsNewEndDateTimeUtc = "";
                     product.ProductTags = "";
+                    product.IsLimitedToStores = IsLimitedToStores;
                 }
                 ProductsInXlsx.Add(product);
                 iRow++;
@@ -1731,7 +1738,9 @@ namespace Nop.Services.ExportImport
                 new PropertyByName<ProductImportModel>("Picture1", p => p.Picture1),
                 new PropertyByName<ProductImportModel>("Picture2", p => p.Picture2),
                 new PropertyByName<ProductImportModel>("Picture3", p => p.Picture3),
+                new PropertyByName<ProductImportModel>("IsLimitedToStores", p => p.IsLimitedToStores)
             };
+
             var newStream = new MemoryStream(await new PropertyManager<ProductImportModel>(ExportProperties, _catalogSettings).ExportToXlsxAsync(ProductsInXlsx));
             await ImportProductsFromXlsxAsync(newStream);
         }
@@ -2179,9 +2188,9 @@ namespace Nop.Services.ExportImport
                 product.UpdatedOnUtc = DateTime.UtcNow;
 
                 if (isNew){
-                    #region Multi-Tenant Plugin
-                    product.LimitedToStores = true;
-                    #endregion
+                    // #region Multi-Tenant Plugin
+                    // product.LimitedToStores = true;
+                    // #endregion
                     
                     await _productService.InsertProductAsync(product);
                     
@@ -2557,6 +2566,9 @@ namespace Nop.Services.ExportImport
             var iRow = 2;
             var setSeName = properties.Any(p => p.PropertyName == "SeName");
 
+            var customer = await _workContext.GetCurrentCustomerAsync();
+            var IsLimitedToStores = !await _customerService.IsAdminAsync(customer);
+
             while (true)
             {
                 var allColumnsAreEmpty = manager.GetProperties
@@ -2662,7 +2674,8 @@ namespace Nop.Services.ExportImport
 
                 if (isNew){
                     #region Multi-Tenant Plugin
-                    manufacturer.LimitedToStores = true;
+                    // manufacturer.LimitedToStores = true;
+                    manufacturer.LimitedToStores = IsLimitedToStores;
                     #endregion
                     
                     await _manufacturerService.InsertManufacturerAsync(manufacturer);
@@ -3072,6 +3085,7 @@ namespace Nop.Services.ExportImport
             public decimal Width { get; set; }
             public decimal Height { get; set; }
             public string RelatedProducts { get; set; }
+            public Boolean IsLimitedToStores { get; set; }
         }
 
         #endregion
