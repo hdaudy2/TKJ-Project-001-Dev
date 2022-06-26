@@ -1166,14 +1166,16 @@ namespace Nop.Services.Common
 
             //store info
             var store = await _storeService.GetStoreByIdAsync(order.StoreId) ?? await _storeContext.GetCurrentStoreAsync();
-            var anchor = new Anchor(store.Url.Trim('/'), font)
+            var address = new Anchor(store.CompanyAddress, font)
             {
-                Reference = store.Url
+                Reference = store.CompanyAddress
             };
 
-            var cellHeader = GetPdfCell(string.Format(await _localizationService.GetResourceAsync("PDFInvoice.Order#", lang.Id), order.CustomOrderNumber), titleFont);
+            var cellHeader = GetPdfCell(store.Name, titleFont);
             cellHeader.Phrase.Add(new Phrase(Environment.NewLine));
-            cellHeader.Phrase.Add(new Phrase(anchor));
+            cellHeader.Phrase.Add(new Phrase(address));
+            cellHeader.Phrase.Add(new Phrase(Environment.NewLine));
+            cellHeader.Phrase.Add(string.Format(await _localizationService.GetResourceAsync("PDFInvoice.Order#", lang.Id), order.CustomOrderNumber));
             cellHeader.Phrase.Add(new Phrase(Environment.NewLine));
             cellHeader.Phrase.Add(await GetParagraphAsync("PDFInvoice.OrderDate", lang, font, (await _dateTimeHelper.ConvertToUserTimeAsync(order.CreatedOnUtc, DateTimeKind.Utc)).ToString("D", new CultureInfo(lang.LanguageCulture))));
             cellHeader.Phrase.Add(new Phrase(Environment.NewLine));
@@ -1193,7 +1195,7 @@ namespace Nop.Services.Common
                 var logoFilePath = await _pictureService.GetThumbLocalPathAsync(logoPicture, 0, false);
                 var logo = Image.GetInstance(logoFilePath);
                 logo.Alignment = GetAlignment(lang, true);
-                logo.ScaleToFit(65f, 65f);
+                logo.ScaleToFit(100f, 100f);
 
                 var cellLogo = new PdfPCell { Border = Rectangle.NO_BORDER };
                 cellLogo.AddElement(logo);
@@ -1576,17 +1578,10 @@ namespace Nop.Services.Common
                 {
                     //simple product
                     //render its properties such as price, weight, etc
-                    var priceStr = $"{product.Price:0.00} {(await _currencyService.GetCurrencyByIdAsync(_currencySettings.PrimaryStoreCurrencyId)).CurrencyCode}";
-                    if (product.IsRental)
-                        priceStr = await _priceFormatter.FormatRentalProductPeriodAsync(product, priceStr);
-                    productTable.AddCell(new Paragraph($"{await _localizationService.GetResourceAsync("PDFProductCatalog.Price", lang.Id)}: {priceStr}", font));
                     productTable.AddCell(new Paragraph($"{await _localizationService.GetResourceAsync("PDFProductCatalog.SKU", lang.Id)}: {product.Sku}", font));
 
                     if (product.IsShipEnabled && product.Weight > decimal.Zero)
                         productTable.AddCell(new Paragraph($"{await _localizationService.GetResourceAsync("PDFProductCatalog.Weight", lang.Id)}: {product.Weight:0.00} {(await _measureService.GetMeasureWeightByIdAsync(_measureSettings.BaseWeightId)).Name}", font));
-
-                    if (product.ManageInventoryMethod == ManageInventoryMethod.ManageStock)
-                        productTable.AddCell(new Paragraph($"{await _localizationService.GetResourceAsync("PDFProductCatalog.StockQuantity", lang.Id)}: {await _productService.GetTotalStockQuantityAsync(product)}", font));
 
                     productTable.AddCell(new Paragraph(" "));
                 }
@@ -1655,14 +1650,10 @@ namespace Nop.Services.Common
                         //    }
                         //}
 
-                        productTable.AddCell(new Paragraph($"{await _localizationService.GetResourceAsync("PDFProductCatalog.Price", lang.Id)}: {associatedProduct.Price:0.00} {(await _currencyService.GetCurrencyByIdAsync(_currencySettings.PrimaryStoreCurrencyId)).CurrencyCode}", font));
                         productTable.AddCell(new Paragraph($"{await _localizationService.GetResourceAsync("PDFProductCatalog.SKU", lang.Id)}: {associatedProduct.Sku}", font));
 
                         if (associatedProduct.IsShipEnabled && associatedProduct.Weight > decimal.Zero)
                             productTable.AddCell(new Paragraph($"{await _localizationService.GetResourceAsync("PDFProductCatalog.Weight", lang.Id)}: {associatedProduct.Weight:0.00} {(await _measureService.GetMeasureWeightByIdAsync(_measureSettings.BaseWeightId)).Name}", font));
-
-                        if (associatedProduct.ManageInventoryMethod == ManageInventoryMethod.ManageStock)
-                            productTable.AddCell(new Paragraph($"{await _localizationService.GetResourceAsync("PDFProductCatalog.StockQuantity", lang.Id)}: {await _productService.GetTotalStockQuantityAsync(associatedProduct)}", font));
 
                         productTable.AddCell(new Paragraph(" "));
 
