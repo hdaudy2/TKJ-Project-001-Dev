@@ -23,10 +23,10 @@
     <div class="page-body">
         <form asp-route="Register" asp-route-returnurl="@Context.Request.Query["ReturnUrl"]" method="post" autocomplete="off">
             <div class="fieldset">
-                <div class="title">
+                <div class="title" style="background-color: #ed5a09;">
                     <strong>@T("Account.YourPersonalDetails")</strong>
                 </div>
-                <div class="form-fields">
+                <div class="form-fields" style="background-color: #d3d3d3;">
                     @if (Model.GenderEnabled)
                     {
                         <div class="inputs">
@@ -155,10 +155,10 @@
             @if (Model.DisplayVatNumber)
             {
                 <div class="fieldset">
-                    <div class="title">
+                    <div class="title" style="background-color: #ed5a09;">
                         <strong>@T("Account.CompanyDetails")</strong>
                     </div>
-                    <div class="form-fields">
+                    <div class="form-fields" style="background-color: #d3d3d3;">
                         @if (Model.DisplayVatNumber)
                         {
                             <div class="inputs">
@@ -179,10 +179,10 @@
             Model.CountryEnabled)
             {
                 <div class="fieldset">
-                    <div class="title">
+                    <div class="title" style="background-color: #ed5a09;">
                         <strong>@T("Account.YourBillingAddress")</strong>
                     </div>
-                    <div class="form-fields">
+                    <div class="form-fields" style="background-color: #d3d3d3;">
                         @if (Model.StreetAddressEnabled)
                         {
                             <div class="inputs">
@@ -295,7 +295,7 @@
             Model.CountryEnabled)
             {
                 <div class="fieldset">
-                    <div class="title">
+                    <div class="title" style="background-color: #ed5a09;">
                         <strong>@T("Account.YourShippingAddress")</strong>
                     </div>
                     <div class="ship-to-same-address">
@@ -303,7 +303,7 @@
                         <label asp-for="SameAsAbove"></label>
                         <span asp-validation-for="SameAsAbove"></span>
                     </div>
-                    <div class="form-fields">
+                    <div class="form-fields" style="background-color: #d3d3d3;">
                         <div class="ShippingForm">
                             @if (Model.StreetAddressEnabled)
                             {
@@ -413,10 +413,10 @@
             @if (Model.NewsletterEnabled || Model.CustomerAttributes.Count > 0)
             {
                 <div class="fieldset">
-                    <div class="title">
+                    <div class="title" style="background-color: #ed5a09;">
                         <strong>@T("Account.Options")</strong>
                     </div>
-                    <div class="form-fields">
+                    <div class="form-fields" style="background-color: #d3d3d3;">
                         @if (Model.NewsletterEnabled)
                         {
                             <div class="inputs">
@@ -437,10 +437,10 @@
             @if (Model.AllowCustomersToSetTimeZone)
             {
                 <div class="fieldset">
-                    <div class="title">
+                    <div class="title" style="background-color: #ed5a09;">
                         <strong>@T("Account.Preferences")</strong>
                     </div>
-                    <div class="form-fields">
+                    <div class="form-fields" style="background-color: #d3d3d3;">
                         @if (Model.AllowCustomersToSetTimeZone)
                         {
                             <div class="inputs">
@@ -454,10 +454,10 @@
             }
 
             <div class="fieldset">
-                <div class="title">
+                <div class="title" style="background-color: #ed5a09;">
                     <strong>@T("Account.YourPassword")</strong>
                 </div>
-                <div class="form-fields">
+                <div class="form-fields" style="background-color: #d3d3d3;">
                     <div class="inputs">
                         <label asp-for="Password" asp-postfix=":"></label>
                         <input asp-for="Password" />
@@ -484,7 +484,7 @@
             @if (Model.AcceptPrivacyPolicyEnabled || Model.GdprConsents.Count > 0)
             {
                 <div class="fieldset">
-                    <div class="form-fields">
+                    <div class="form-fields" style="background-color: #d3d3d3;">
                         @if (Model.AcceptPrivacyPolicyEnabled)
                         {
                             <script asp-location="Footer">
