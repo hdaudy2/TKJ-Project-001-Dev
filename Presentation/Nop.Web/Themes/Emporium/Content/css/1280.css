@@ -27,6 +27,10 @@
     padding-right: 20px;
 }
 
+.header-log{
+	padding-right: 20px;
+}
+
 .header-links li + li {
     padding-left: 20px;
 }

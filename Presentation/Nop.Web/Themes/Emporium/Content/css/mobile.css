@@ -123,6 +123,10 @@
 	display: none;
 }
 
+.header-log{
+	display: none;
+}
+
 .mobile-logo {
 	position: relative;
 	display: inline-block;
