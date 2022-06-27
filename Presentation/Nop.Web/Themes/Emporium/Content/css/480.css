@@ -51,11 +51,22 @@
 	max-width: 355px;
 }
 
+.header-selectors-wrapper {
+	font-size: 0px;
+}
+
+.header-selectors-wrapper > div {
+
+	text-align: center;
+	margin-left: 180px;	
+}
+
 /* LEFT/RIGHT COLUMN */
 
 .block {
 	float: left;
-	width: 48%;
+
+color:white;	width: 48%;
 	margin: 0 1% 2%;
 	text-align: left;
 }
@@ -122,6 +133,7 @@
 .login-page .title strong,
 .registration-page .title strong {
 	font-size: 18px;
+	color:white;
 }
 .date-of-birth .date-picker-wrapper select {
 	padding: 0 35px 0 20px;

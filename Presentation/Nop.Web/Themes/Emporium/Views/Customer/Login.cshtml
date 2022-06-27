@@ -51,24 +51,24 @@
             else
             {
                 <div class="new-wrapper register-block">
-                    <div class="title">
+                    <div class="title" style="background-color:#ed5a09  ;">
                         <strong>@T("Account.Login.NewCustomer")</strong>
                     </div>
-                    <div class="text">
+                    <div class="text" style="background-color: #d3d3d3;">
                         @T("Account.Login.NewCustomerText")
                     </div>
                     <div class="buttons">
-                        <button type="button" class="button-1 register-button" onclick="location.href='@registerUrl'">@T("Account.Register")</button>
+                        <button type="button" class="button-1 register-button" onclick="location.href='@registerUrl'" style="background-color: #444;">@T("Account.Register")</button>
                     </div>
                 </div>
             }
             <div class="returning-wrapper fieldset">
                 <form asp-route="Login" asp-route-returnurl="@Context.Request.Query["ReturnUrl"]" method="post" autocomplete="off">
-                    <div class="title">
+                    <div class="title" style="background-color:#ed5a09  ;">
                         <strong>@T("Account.Login.ReturningCustomer")</strong>
                     </div>
                     <div asp-validation-summary="ModelOnly" class="message-error">@T("Account.Login.Unsuccessful")</div>
-                    <div class="form-fields">
+                    <div class="form-fields"style="background-color: #d3d3d3;">
                         @if (Model.UsernamesEnabled)
                         {
                             <div class="inputs">
@@ -106,7 +106,7 @@
                         }
                     </div>
                     <div class="buttons">
-                        <button type="submit" class="button-1 login-button">@T("Account.Login.LoginButton")</button>
+                        <button type="submit" class="button-1 login-button" style="background-color: #444;">@T("Account.Login.LoginButton")</button>
                     </div>
                     <div class="in-header-register">
                         <button type="button" class="button-1 register-button" onclick="location.href='@registerUrl'">@T("Account.Register")</button>

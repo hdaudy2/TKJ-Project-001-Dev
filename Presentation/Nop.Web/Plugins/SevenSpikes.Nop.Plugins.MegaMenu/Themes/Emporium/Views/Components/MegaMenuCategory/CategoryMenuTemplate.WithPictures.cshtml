@@ -29,11 +29,11 @@
                 @(await Html.DataTableAsync<MegaMenuCategoryModel>(Model.Categories, Model.Item.NumberOfBoxesPerRow, "row", "box",
                 @<text>
                 <div class="picture-title-wrap">
-                    <div class="picture">
+                    @* <div class="picture">
                         <a href="@Url.RouteUrl("Category", new {item.CategoryModel.SeName})" title="@item.CategoryModel.PictureModel.Title">
                             <img class="lazy" alt="@item.CategoryModel.PictureModel.AlternateText" src="data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==" data-original="@item.CategoryModel.PictureModel.ImageUrl" />
                         </a>
-                    </div>
+                    </div> *@
                     <div class="title">
                         <a href="@Url.RouteUrl("Category", new {item.CategoryModel.SeName})" title="@item.CategoryModel.Name"><span>@item.CategoryModel.Name</span></a>
                     </div>

@@ -847,7 +847,7 @@ label, label + * {
 
 .admin-header-links {
   background-color: #333;
-  text-align: center;
+  /* text-align: center; */
   color: #eee;
 }
 

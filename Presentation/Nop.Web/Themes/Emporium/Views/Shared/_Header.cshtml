@@ -8,31 +8,31 @@
     bool stickyCategoryMenuFlyout = true;
     bool showCategoriesInSideMenu = true;
 }
-<div class="header">
+<div>
     @await Component.InvokeAsync("Widget", new { widgetZone = PublicWidgetZones.HeaderBefore })
-    <div class="header-upper">
+    <div class="header-upper" style="display: flex;">
         <div class="header-selectors-wrapper">
             @await Component.InvokeAsync("TaxTypeSelector")
             @await Component.InvokeAsync("CurrencySelector")
             @await Component.InvokeAsync("LanguageSelector")
             @await Component.InvokeAsync("Widget", new { widgetZone = PublicWidgetZones.HeaderSelectors })
         </div>
+        <div class="header-links-wrapper">
+            @await Component.InvokeAsync("HeaderLinks")
+        </div>
     </div>
     <div class="header-lower">
-        <div class="header-logo">
+        <div class="header-log">
             @await Component.InvokeAsync("Logo")
+            <h3 style="color:white;font-family:Arial, Helvetica, sans-serif; font-size:25px;">Tire & Wheel Service Solutions</h3>
         </div>
-        <div class="search-box store-search-box">
+        @* <div class="search-box store-search-box">
             <div class="close-side-menu">
                 <span class="close-side-menu-text">@T("Search.SearchBox.Tooltip")</span>
                 <span class="close-side-menu-btn">@T("SevenSpikes.Themes.Common.CloseMenu")</span>
             </div>
             @await Component.InvokeAsync("SearchBox")
-        </div>
-
-        <div class="header-links-wrapper">
-            @await Component.InvokeAsync("HeaderLinks")
-        </div>
+        </div> *@
     </div>
     <div class="header-menu-parent">
         <div class="header-menu @if (showCategoriesInSideMenu){<text>categories-in-side-panel</text>}">
@@ -58,7 +58,14 @@
             {
                 @await Component.InvokeAsync("TopMenu")
             }
-		    <div class="mobile-menu-items"></div>
+            <div class="mobile-menu-items"></div>
+            <div class="search-box store-search-box" style="float: right; margin-top: -47px;;">
+                <div class="close-side-menu">
+                    <span class="close-side-menu-text">@T("Search.SearchBox.Tooltip")</span>
+                    <span class="close-side-menu-btn">@T("SevenSpikes.Themes.Common.CloseMenu")</span>
+                </div>
+                @await Component.InvokeAsync("SearchBox")
+            </div>
         </div>
     </div>
     @await Component.InvokeAsync("Widget", new { widgetZone = PublicWidgetZones.HeaderAfter })

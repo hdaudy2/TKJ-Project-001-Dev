@@ -25,12 +25,12 @@
         {
             <li>
                 <a href="@Url.RouteUrl("CustomerInfo")" class="ico-account opener">@T("Account.MyAccount")@*@Model.CustomerName*@</a>
-                <div class="profile-menu-box">
+                <div class="profile-menu-box" style="color: white ;">
                     <div class="close-side-menu">
                         <span class="close-side-menu-text">@Model.CustomerName</span>
                         <span class="close-side-menu-btn">@T("SevenSpikes.Themes.Common.CloseMenu")</span>
                     </div>
-                    <a href="@Url.RouteUrl("CustomerInfo")" class="ico-account">@T("Account.MyAccount")@*@Model.CustomerName*@</a>
+                    <a href="@Url.RouteUrl("CustomerInfo")" class="ico-account" style="color: black;">@T("Account.MyAccount")@*@Model.CustomerName*@</a>
                     @if (Model.AllowPrivateMessages)
                     {
                         <a href="@Url.RouteUrl("PrivateMessages", new { tab = "" })" class="ico-inbox">
@@ -38,7 +38,7 @@
                             <span class="inbox-unread">@Model.UnreadPrivateMessages</span>
                         </a>
                     }
-                    <a href="@Url.RouteUrl("Logout")" class="ico-logout">@T("Account.Logout")</a>
+                    <a href="@Url.RouteUrl("Logout")" class="ico-logout" style="color: black;">@T("Account.Logout")</a>
                 </div>
             </li>
         }
@@ -57,10 +57,10 @@
                     <div class="header-form-holder">
                         @if (Model.RegistrationType != UserRegistrationType.Disabled)
                         {
-                            <a href="@Url.RouteUrl("Register", new { returnUrl })" class="ico-register">@T("Account.Register")</a>
+                            <a href="@Url.RouteUrl("Register", new { returnUrl })" class="ico-register" style="color: black;">@T("Account.Register")</a>
                         }
-                        <a href="@Url.RouteUrl("Login", new { returnUrl })" class="ico-login">@T("Account.Login")</a>
-                        <a href="@Url.RouteUrl("AdminLogin", new { returnUrl })" class="ico-account" target="_blank">@T("Account.login.admin")</a>
+                        <a href="@Url.RouteUrl("Login", new { returnUrl })" class="ico-login" style="color: black;">@T("Account.Login")</a>
+                        <a href="@Url.RouteUrl("AdminLogin", new { returnUrl })" class="ico-account" target="_blank"  style="color: black;">@T("Account.login.admin")</a>
                     </div>
                 </div>
             </li>
