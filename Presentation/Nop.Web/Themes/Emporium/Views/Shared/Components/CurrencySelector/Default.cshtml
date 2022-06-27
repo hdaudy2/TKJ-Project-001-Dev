@@ -10,7 +10,7 @@
 
 @if (Model.AvailableCurrencies.Count > 1)
 {
-    <div class="currency-selector desktop">
+    <div class="currency-selector desktop" style="float: left;">
         @{
             var returnUrl = webHelper.GetRawUrl(Context.Request);
             var currencies = await Model.AvailableCurrencies.SelectAwait(async x => new SelectListItem

@@ -12,6 +12,8 @@ span.search-box-text {
 }
 span.search-box-text .k-input {
     width: 100% !important;
+    margin-right: 250px;
+    padding-right: 20px;
 }
 
 input.search-box-text.instant-search-busy {

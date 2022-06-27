@@ -11,7 +11,7 @@
         }
         @if (Model.DisplayAdminLink)
         {
-            <a href="@Url.Content("~/Admin")" class="administration">@T("Account.Administration")</a>
+            <a href="@Url.Content("~/Admin")" class="administration" style="color:white">@T("Account.Administration")</a>
         }
         @if (!string.IsNullOrEmpty(Model.EditPageUrl))
         {
