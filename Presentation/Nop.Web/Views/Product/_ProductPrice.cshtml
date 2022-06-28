@@ -44,7 +44,12 @@
                 }
                 @*render price*@
                 <span @if (string.IsNullOrWhiteSpace(Model.PriceWithDiscount)) { <text> id="price-value-@(Model.ProductId)" class="price-value-@(Model.ProductId)" </text> }>
-                    @Html.Raw(Model.Price)
+                    @if(Model.Price != null){
+                        @Html.Raw(Model.Price)
+                    }
+                    else{
+                        <a href="@Url.RouteUrl("Login")">Connect to view price</a>
+                    }
                 </span>
             </div>
             if (!string.IsNullOrWhiteSpace(Model.PriceWithDiscount))
