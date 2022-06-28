@@ -572,7 +572,9 @@ namespace Nop.Services.ExportImport
             manager.ReadFromXlsx(worksheet, iRow);
 
             //try get category from database by ID
-            var category = await await allCategories.Values.FirstOrDefaultAwaitAsync(async c => (await c).Id == manager.GetProperty("Id")?.IntValue);
+            var category = manager.GetProperty("Code") != null
+                ? await await allCategories.Values.FirstOrDefaultAwaitAsync(async c => (await c).CodeId == manager.GetProperty("Code")?.StringValue)
+                : await await allCategories.Values.FirstOrDefaultAwaitAsync(async c => (await c).Id == manager.GetProperty("Id")?.IntValue);
 
             if (_catalogSettings.ExportImportCategoriesUsingCategoryName && category == null)
             {
@@ -601,6 +603,7 @@ namespace Nop.Services.ExportImport
                 category.PageSizeOptions = _catalogSettings.DefaultCategoryPageSizeOptions;
                 category.Published = true;
                 category.IncludeInTopMenu = true;
+                category.CategoryTemplateId = 1;
                 category.AllowCustomersToSelectPageSize = true;
             }
             else
@@ -2721,7 +2724,7 @@ namespace Nop.Services.ExportImport
             var manager = new PropertyManager<Category>(properties, _catalogSettings);
 
             var iRow = 2;
-            var setSeName = properties.Any(p => p.PropertyName == "SeName");
+            var setSeName = manager.GetProperty("Code") == null ? properties.Any(p => p.PropertyName == "SeName") : true;
 
             //performance optimization, load all categories in one SQL request
             var allCategories = await (await _categoryService
