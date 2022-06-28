@@ -111,7 +111,7 @@
             <ul class="list">
                 @if (Model.AllowCustomersToApplyForVendorAccount && Model.DisplayApplyVendorAccountFooterItem)
                 {
-                    <li><a href="@Url.RouteUrl("ApplyVendorAccount")">@T("Vendors.ApplyAccount")</a></li>
+                    <li><a href="@Url.RouteUrl("Register")">@T("Customer.ApplyAccount")</a></li>
                 }
                 @foreach (var topic in Model.Topics.Where(x => x.IncludeInFooterColumn3).ToList())
                 {

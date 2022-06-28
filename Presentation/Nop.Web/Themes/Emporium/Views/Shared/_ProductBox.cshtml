@@ -96,7 +96,14 @@
                 {
                     <span class="price old-price">@Model.ProductPrice.OldPrice</span>
                 }
-                <span class="price actual-price">@Model.ProductPrice.Price</span>
+                <span class="price actual-price">
+                     @if(Model.ProductPrice.Price != null){
+                        @Model.ProductPrice.Price;
+                    }
+                    else{
+                        <a href="@Url.RouteUrl("Login")">Connect to view price</a>
+                    }
+                </span>
                 @if (Model.ProductPrice.DisplayTaxShippingInfo)
                 {
                     var inclTax = await workContext.GetTaxDisplayTypeAsync() == TaxDisplayType.IncludingTax;

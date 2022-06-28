@@ -813,6 +813,10 @@
 	margin-left: 24%;
 }
 
-
+.admin-header-links {
+	background-color: #333;
+    text-align: center;
+    color: #fff;	
+}
 
 }
