@@ -514,4 +514,27 @@
 	margin-left: 20%;
 }
 
+.admin-header-links {
+    float: left;
+    font-size: 12px;
+    background: none;
+    color: #bbb;
+  }
+
+.admin-header-links:only-child {
+float: left;
+display: block;
+}
+
+.admin-header-links a,
+.admin-header-links span {
+line-height: 30px;
+font-weight: normal;
+transition: 0.2s ease;
+}
+
+.admin-header-links a:hover {
+color: #fff;
+}
+
 }
