@@ -1441,6 +1441,8 @@ namespace Nop.Web.Areas.Admin.Controllers
                 if (address.StateProvinceId == 0)
                     address.StateProvinceId = null;
 
+                address.CountryId = 41; // Add Canada as Default country
+
                 await _addressService.InsertAddressAsync(address);
 
                 await _customerService.InsertCustomerAddressAsync(customer, address);

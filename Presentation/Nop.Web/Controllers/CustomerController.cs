@@ -1697,6 +1697,7 @@ namespace Nop.Web.Controllers
 
             if (ModelState.IsValid)
             {
+                model.Address.CountryId = 41;
                 var address = model.Address.ToEntity();
                 address.CustomAttributes = customAttributes;
                 address.CreatedOnUtc = DateTime.UtcNow;
@@ -1770,6 +1771,7 @@ namespace Nop.Web.Controllers
 
             if (ModelState.IsValid)
             {
+                model.Address.CountryId = 41;
                 address = model.Address.ToEntity(address);
                 address.CustomAttributes = customAttributes;
                 await _addressService.UpdateAddressAsync(address);
