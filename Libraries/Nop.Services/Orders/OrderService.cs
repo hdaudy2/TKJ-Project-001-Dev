@@ -1002,7 +1002,7 @@ namespace Nop.Services.Orders
                         orderby o.CreatedOnUtc descending, orderItem.Id
                         select orderItem;
 
-            var orderItems = query.FirstOrDefault();
+            var orderItems = await query.FirstOrDefaultAsync();
             return orderItems;
         }
 
