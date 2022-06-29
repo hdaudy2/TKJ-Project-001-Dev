@@ -16,7 +16,11 @@
 
 .header-selectors-wrapper,
 .header-lower {
-	width: 88%;
+	width: 100%;
+}
+
+.header-selectors-wrapper > * {
+	float: left;
 }
 
 .header-menu {
@@ -515,15 +519,16 @@
 }
 
 .admin-header-links {
-    float: left;
     font-size: 12px;
     background: none;
     color: #bbb;
+	position: absolute;
+	left: 50%;
+	transform: translate(-50%);
   }
 
 .admin-header-links:only-child {
-float: left;
-display: block;
+	display: block;
 }
 
 .admin-header-links a,
