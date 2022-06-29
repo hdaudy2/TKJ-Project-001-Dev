@@ -78,21 +78,39 @@
         <span asp-validation-for="Company"></span>
     </div>
 </div>
-<div class="form-group row">
-    <div class="col-md-3">
-        <nop-label asp-for="CountryId" />
+@if(Model.CountryId > 0){
+    <div class="form-group row">
+        <div class="col-md-3">
+            <nop-label asp-for="CountryId" />
+        </div>
+        <div class="col-md-9">
+            <select asp-for="CountryId" class="form-control select-box single-line" readonly>
+                <option selected="" value="41">Canada</option>
+            </select>
+        </div>
     </div>
-    <div class="col-md-9">
-        <nop-select asp-for="CountryId" asp-items="Model.AvailableCountries" asp-required="@Model.CountryRequired" />
-        <span asp-validation-for="CountryId"></span>
-    </div>
-</div>
+}
 <div class="form-group row">
     <div class="col-md-3">
         <nop-label asp-for="StateProvinceId" />
     </div>
     <div class="col-md-9">
-        <nop-select asp-for="StateProvinceId" asp-items="Model.AvailableStates" />
+        <select asp-for="StateProvinceId" class="form-control select-box single-line">
+            <option selected="" value="0">Select state</option>
+            <option value="193">Alberta</option>
+            <option value="194">British Columbia</option>
+            <option value="195">Manitoba</option>
+            <option value="196">New Brunswick</option>
+            <option value="197">Newfoundland and Labrador</option>
+            <option value="198">Northwest Territories</option>
+            <option value="199">Nova Scotia</option>
+            <option value="200">Nunavut</option>
+            <option value="201">Ontario</option>
+            <option value="202">Prince Edward Island</option>
+            <option value="203">Quebec</option>
+            <option value="204">Saskatchewan</option>
+            <option value="205">Yukon Territory</option>
+        </select>
         <span asp-validation-for="StateProvinceId"></span>
     </div>
 </div>
