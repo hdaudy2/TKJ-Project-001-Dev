@@ -199,14 +199,19 @@ namespace Nop.Services.Messages
         /// </returns>
         protected virtual async Task<IList<int>> SendNotificationForStoreAdminsAsync(int languageId, Store store, List<Token> commonTokens, IList<MessageTemplate> messageTemplates)
         {
-            int[] StoreAdminRole = {(await _customerService.GetCustomerRoleBySystemNameAsync("Stores")).Id};
-            var AllStoreAdmins = await _customerService.GetAllCustomersAsync(customerRoleIds: StoreAdminRole);
+            var StoreAdminRole = await _customerService.GetCustomerRoleBySystemNameAsync("Stores");
+            var SuperAdminRole = await _customerService.GetCustomerRoleBySystemNameAsync("Administrators");
 
-            var storeAdmin = AllStoreAdmins.Where(cs => cs.RegisteredInStoreId == store.Id).ToList();
+            List<int> RoleIds = new List<int>();
+            
+            if(StoreAdminRole is not null) RoleIds.Add(StoreAdminRole.Id);
+            if(SuperAdminRole is not null) RoleIds.Add(SuperAdminRole.Id);
+
+            var StoreAdmins = await _customerService.GetAllCustomersAsync(customerRoleIds: RoleIds.ToArray());
 
             List<int> ReturnList = new List<int>();
 
-            foreach (var admin in storeAdmin)
+            foreach (var admin in StoreAdmins)
             {
                 var Email = admin.Email;
                 string FirstName = "";
