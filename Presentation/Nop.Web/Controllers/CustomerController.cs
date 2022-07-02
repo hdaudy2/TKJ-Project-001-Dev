@@ -1235,7 +1235,20 @@ namespace Nop.Web.Controllers
                     ModelState.AddModelError("", error);
             }
 
-            await _logger.InsertLogAsync(LogLevel.Error, "Registration ModelStatus invalid", "Invalid ModelStatus on Registration Reloading registration page");
+            string messages = "";
+            int errorCount = 1;
+
+            foreach (var modelState in ViewData.ModelState.Values)
+            {
+                var value = modelState.AttemptedValue;
+                foreach (var error in modelState.Errors)
+                {
+                    messages += errorCount + ": Value: '" + value + "'; Error: '" + error.ErrorMessage + "';\n";
+                    errorCount++;
+                }
+            }
+
+            await _logger.InsertLogAsync(LogLevel.Error, "Registration ModelStatus invalid", "Invalid ModelStatus on Registration Reloading registration page.\n" + messages);
 
             //If we got this far, something failed, redisplay form
             model = await _customerModelFactory.PrepareRegisterModelAsync(model, true, customerAttributesXml);
