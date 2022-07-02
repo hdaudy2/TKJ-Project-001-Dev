@@ -292,5 +292,14 @@ namespace Nop.Services.Catalog
         /// The task result contains the category breadcrumb 
         /// </returns>
         Task<IList<Category>> GetCategoryBreadCrumbAsync(Category category, IList<Category> allCategories = null, bool showHidden = false);
+
+        /// <summary>
+        /// Get View All Category 
+        /// </summary>
+        /// <returns>
+        /// A task that represents the asynchronous operation
+        /// The task result contains the View All Category 
+        /// </returns>
+        Task<Category> GetViewAllCategory();
     }
 }

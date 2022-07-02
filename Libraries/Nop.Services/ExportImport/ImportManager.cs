@@ -419,7 +419,7 @@ namespace Nop.Services.ExportImport
         }
 
         /// <returns>A task that represents the asynchronous operation</returns>
-        protected virtual async Task<(string seName, bool isParentCategoryExists)> UpdateCategoryByXlsxAsync(Category category, PropertyManager<Category> manager, Dictionary<string, ValueTask<Category>> allCategories, bool isNew)
+        protected virtual async Task<(string seName, bool isParentCategoryExists)> UpdateCategoryByXlsxAsync(Category category, PropertyManager<Category> manager, Dictionary<string, ValueTask<Category>> allCategories, bool isNew, Category viewAll)
         {
             var seName = string.Empty;
             var isParentCategoryExists = true;
@@ -472,13 +472,17 @@ namespace Nop.Services.ExportImport
                     case "CodeParent":
                         if (!isParentCategorySet)
                         {
+                            Category parentCategory = new Category();
 
-                            var value = property.StringValue == "PG" ? "0" : property.StringValue;
+                            if(property.StringValue == "PG"){
+                                parentCategory = viewAll;
+                                isParentCategorySet = true;
+                            }else{
+                                parentCategory = await await allCategories.Values.FirstOrDefaultAwaitAsync(async c => (await c).CodeId == property.StringValue);
+                                isParentCategorySet = parentCategory != null;
+                            }
 
-                            var parentCategory = await await allCategories.Values.FirstOrDefaultAwaitAsync(async c => (await c).CodeId == value);
-                            isParentCategorySet = parentCategory != null;
-
-                            isParentCategoryExists = isParentCategorySet || value == "0";
+                            isParentCategoryExists = isParentCategorySet;
 
                             category.ParentCategoryId = parentCategory?.Id ?? 0;
                         }
@@ -2732,6 +2736,8 @@ namespace Nop.Services.ExportImport
                 .GroupByAwait(async c => await _categoryService.GetFormattedBreadCrumbAsync(c))
                 .ToDictionaryAsync(c => c.Key, c => c.FirstAsync());
 
+            var viewAll = await _categoryService.GetViewAllCategory();
+
             var saveNextTime = new List<int>();
 
             while (true)
@@ -2747,7 +2753,7 @@ namespace Nop.Services.ExportImport
                 var (category, isNew, currentCategoryBreadCrumb) = await GetCategoryFromXlsxAsync(manager, worksheet, iRow, allCategories);
 
                 //update category by data in xlsx file
-                var (seName, isParentCategoryExists) = await UpdateCategoryByXlsxAsync(category, manager, allCategories, isNew);
+                var (seName, isParentCategoryExists) = await UpdateCategoryByXlsxAsync(category, manager, allCategories, isNew, viewAll);
 
                 #region Multi-Tenant Plugin
                 var _storeMappingService = Nop.Core.Infrastructure.EngineContext.Current.Resolve<Nop.Services.Stores.IStoreMappingService>();
@@ -2783,7 +2789,7 @@ namespace Nop.Services.ExportImport
                     //get category by data in xlsx file if it possible, or create new category
                     var (category, isNew, currentCategoryBreadCrumb) = await GetCategoryFromXlsxAsync(manager, worksheet, rowId, allCategories);
                     //update category by data in xlsx file
-                    var (seName, isParentCategoryExists) = await UpdateCategoryByXlsxAsync(category, manager, allCategories, isNew);
+                    var (seName, isParentCategoryExists) = await UpdateCategoryByXlsxAsync(category, manager, allCategories, isNew, viewAll);
 
                     if (!isParentCategoryExists)
                         continue;

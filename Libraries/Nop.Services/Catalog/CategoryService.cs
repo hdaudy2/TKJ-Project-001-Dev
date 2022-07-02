@@ -9,6 +9,7 @@ using Nop.Core.Domain.Customers;
 using Nop.Core.Domain.Discounts;
 using Nop.Data;
 using Nop.Services.Customers;
+using Nop.Services.Seo;
 using Nop.Services.Discounts;
 using Nop.Services.Localization;
 using Nop.Services.Security;
@@ -22,7 +23,7 @@ namespace Nop.Services.Catalog
     public partial class CategoryService : ICategoryService
     {
         #region Fields
-
+        private readonly CatalogSettings _catalogSettings;
         private readonly IAclService _aclService;
         private readonly ICustomerService _customerService;
         private readonly ILocalizationService _localizationService;
@@ -34,12 +35,14 @@ namespace Nop.Services.Catalog
         private readonly IStoreContext _storeContext;
         private readonly IStoreMappingService _storeMappingService;
         private readonly IWorkContext _workContext;
+        private readonly IUrlRecordService _urlRecordService;
 
         #endregion
 
         #region Ctor
 
         public CategoryService(
+            CatalogSettings catalogSettings,
             IAclService aclService,
             ICustomerService customerService,
             ILocalizationService localizationService,
@@ -50,8 +53,10 @@ namespace Nop.Services.Catalog
             IStaticCacheManager staticCacheManager,
             IStoreContext storeContext,
             IStoreMappingService storeMappingService,
-            IWorkContext workContext)
+            IWorkContext workContext,
+            IUrlRecordService urlRecordService)
         {
+            _catalogSettings = catalogSettings;
             _aclService = aclService;
             _customerService = customerService;
             _localizationService = localizationService;
@@ -63,6 +68,7 @@ namespace Nop.Services.Catalog
             _storeContext = storeContext;
             _storeMappingService = storeMappingService;
             _workContext = workContext;
+            _urlRecordService = urlRecordService;
         }
 
         #endregion
@@ -800,6 +806,40 @@ namespace Nop.Services.Catalog
 
                 return result;
             });
+        }
+
+        /// <summary>
+        /// Get View All Category 
+        /// </summary>
+        /// <returns>
+        /// A task that represents the asynchronous operation
+        /// The task result contains the View All Category 
+        /// </returns>
+        public virtual async Task<Category> GetViewAllCategory()
+        {
+            var category = await (from p in _categoryRepository.Table
+                        where p.CodeId == "0"
+                        select p).SingleOrDefaultAsync();
+
+            if(category is not null) return category;
+
+            category ??= new Category();
+
+            category.Name = "View All";
+            category.ParentCategoryId = 0;
+            category.CreatedOnUtc = DateTime.UtcNow;
+            category.PageSize = _catalogSettings.DefaultCategoryPageSize;
+            category.PageSizeOptions = _catalogSettings.DefaultCategoryPageSizeOptions;
+            category.Published = true;
+            category.CategoryTemplateId = 1;
+            category.AllowCustomersToSelectPageSize = true;
+            category.CodeId = "0";
+
+            await _categoryRepository.InsertAsync(category);
+            
+            await _urlRecordService.SaveSlugAsync(category, await _urlRecordService.ValidateSeNameAsync(category, "all-categories", category.Name, true), 0);
+
+            return category;
         }
 
         #endregion
