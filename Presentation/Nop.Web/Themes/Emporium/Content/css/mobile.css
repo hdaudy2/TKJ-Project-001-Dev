@@ -636,6 +636,10 @@
 	display: none !important;
 }
 
+  .header-upper {
+    padding: 0px;
+    height: 0px;
+  }
 
 }
 
