@@ -705,8 +705,12 @@ namespace Nop.Web.Factories
 
             var categoryIds = new List<int> { category.Id };
 
+            var showSubCategories = _catalogSettings.ShowProductsFromSubcategories;
+
+            if(category.Name is "View All" || category.CodeId is "0") showSubCategories = false;
+
             //include subcategories
-            if (_catalogSettings.ShowProductsFromSubcategories)
+            if (showSubCategories)
                 categoryIds.AddRange(await _categoryService.GetChildCategoryIdsAsync(category.Id, currentStore.Id));
 
             //price range
