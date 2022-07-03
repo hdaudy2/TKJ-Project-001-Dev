@@ -5550,9 +5550,9 @@ select.estimate-shipping-address-control {
 .write-review .button-1 {
   display: block;
   border: none;
-  padding: 0 25px;
+  /*padding: 0 25px;*/
   height: 45px;
-  width: 100%;
+  /*width: 100%;*/
   border-radius: 3px;
   background-color: #eebe00;
   color: #fff;
@@ -6285,7 +6285,10 @@ select.estimate-shipping-address-control {
 .forum-edit-page .button-1:only-child,
 .registration-page .button-1:only-child,
 .apply-vendor-page .button-1:only-child {
-  width: 100%;
+  /*width: 100%;*/
+  padding: 10px 25px;
+  background-color: #444;
+  margin: 0 auto;
 }
 
 .forum-edit-page .buttons,
