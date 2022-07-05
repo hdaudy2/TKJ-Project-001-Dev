@@ -8,8 +8,10 @@ using System.Threading.Tasks;
 using Nop.Core;
 using Nop.Core.Caching;
 using Nop.Core.Configuration;
+using Nop.Core.Domain.Messages;
 using Nop.Core.Domain.Configuration;
 using Nop.Data;
+using Nop.Services.Messages;
 
 namespace Nop.Services.Configuration
 {
@@ -22,16 +24,19 @@ namespace Nop.Services.Configuration
 
         private readonly IRepository<Setting> _settingRepository;
         private readonly IStaticCacheManager _staticCacheManager;
+        private readonly IEmailAccountService _emailAccountService;
 
         #endregion
 
         #region Ctor
 
         public SettingService(IRepository<Setting> settingRepository,
-            IStaticCacheManager staticCacheManager)
+            IStaticCacheManager staticCacheManager,
+            IEmailAccountService emailAccountService)
         {
             _settingRepository = settingRepository;
             _staticCacheManager = staticCacheManager;
+            _emailAccountService = emailAccountService;
         }
 
         #endregion
@@ -342,10 +347,12 @@ namespace Nop.Services.Configuration
                     continue;
 
                 var key = type.Name + "." + prop.Name;
+
                 //load by store
                 var setting = await GetSettingByKeyAsync<string>(key, storeId: storeId, loadSharedValueIfNotFound: true);
                 if (setting == null)
                     continue;
+
 
                 if (!TypeDescriptor.GetConverter(prop.PropertyType).CanConvertFrom(typeof(string)))
                     continue;
@@ -354,6 +361,11 @@ namespace Nop.Services.Configuration
                     continue;
 
                 var value = TypeDescriptor.GetConverter(prop.PropertyType).ConvertFromInvariantString(setting);
+                
+                if(key is "EmailAccountSettings.DefaultEmailAccountId"){
+                    var storeEmail = await _emailAccountService.GetDefaultEmailAccountByStoreIdAsync(storeId);
+                    if(storeEmail is not null) value = storeEmail.Id;
+                }
 
                 //set property
                 prop.SetValue(settings, value, null);
