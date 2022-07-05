@@ -199,16 +199,21 @@ namespace Nop.Services.Messages
         /// </returns>
         protected virtual async Task<IList<int>> SendNotificationForStoreAdminsAsync(int languageId, Store store, List<Token> commonTokens, IList<MessageTemplate> messageTemplates)
         {
-            var StoreAdminRole = await _customerService.GetCustomerRoleBySystemNameAsync("Stores");
-            var SuperAdminRole = await _customerService.GetCustomerRoleBySystemNameAsync("Administrators");
-
-            List<int> RoleIds = new List<int>();
+            // Getting Both Store and administrator Role;
+            int[] StoreAdminRoleID = {(await _customerService.GetCustomerRoleBySystemNameAsync("Stores")).Id};
+            int[] SuperAdminRoleID = {(await _customerService.GetCustomerRoleBySystemNameAsync("Administrators")).Id};
             
-            if(StoreAdminRole is not null) RoleIds.Add(StoreAdminRole.Id);
-            if(SuperAdminRole is not null) RoleIds.Add(SuperAdminRole.Id);
-
-            var StoreAdmins = await _customerService.GetAllCustomersAsync(customerRoleIds: RoleIds.ToArray());
-
+            List<Customer> StoreAdmins = new List<Customer>();
+            
+            // Fetching Users which have Role of "Stores" 
+            StoreAdmins = (await _customerService.GetAllCustomersAsync(customerRoleIds: StoreAdminRoleID)).ToList();
+            // Filter User registered on the current store 
+            StoreAdmins = StoreAdmins.Where(cs => cs.RegisteredInStoreId == store.Id).ToList();
+            // // Is no use found with upper requirements, simple Fetch user with Administrator role
+            if(StoreAdmins.Count < 1) StoreAdmins = (await _customerService.GetAllCustomersAsync(customerRoleIds: SuperAdminRoleID)).ToList(); 
+            
+            if(StoreAdmins is null) throw new Exception("No Admin Found to send notification...");
+            
             List<int> ReturnList = new List<int>();
 
             foreach (var admin in StoreAdmins)
@@ -217,7 +222,9 @@ namespace Nop.Services.Messages
                 string FirstName = "";
                 string LastName = "";
 
+                // Fetching all generic attributes of the admin
                 var genericAttributes = await _customerService.GetGenericAttributesByCustomerAsync(admin);
+                
                 foreach (var item in genericAttributes)
                 {
                     if(item.Key == "FirstName") FirstName = item.Value;
