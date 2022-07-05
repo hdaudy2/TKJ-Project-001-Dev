@@ -1,0 +1,116 @@
+﻿<Language Name="English" IsRightToLeft="false">
+  <LocaleResource Name="Admin.FoxNetSoft.Plugin.Tax.MultipleTaxes.Settings.IsRegisted">
+    <Value>Registered version.</Value>
+  </LocaleResource>
+  <LocaleResource Name="Admin.FoxNetSoft.Plugin.Tax.MultipleTaxes.Settings.IsNoRegisted">
+    <Value>Unregistered version, trial period 30 days.</Value>
+  </LocaleResource>
+  <LocaleResource Name="Admin.FoxNetSoft.Plugin.Tax.MultipleTaxes.Settings.IsExpired">
+    <Value>Your license has expired, you should renew the license with a 50% discount.</Value>
+  </LocaleResource>
+  <LocaleResource Name="Admin.FoxNetSoft.Plugin.Tax.MultipleTaxes.Settings.StoreUrl">
+    <Value>Website address (for registration)</Value>
+  </LocaleResource>
+  <LocaleResource Name="Admin.FoxNetSoft.Plugin.Tax.MultipleTaxes.Settings.StoreUrl.Hint">
+    <Value>Website address (for registration).</Value>
+  </LocaleResource>
+  <LocaleResource Name="Admin.FoxNetSoft.Plugin.Tax.MultipleTaxes.Settings.showDebugInfo">
+    <Value>Enable Debugging</Value>
+  </LocaleResource>
+  <LocaleResource Name="Admin.FoxNetSoft.Plugin.Tax.MultipleTaxes.Settings.showDebugInfo.Hint">
+    <Value>Write debugging information into file. In ~/App_Data/ folder.</Value>
+  </LocaleResource>
+  <LocaleResource Name="Admin.FoxNetSoft.Plugin.Tax.MultipleTaxes.Settings.SerialNumber">
+    <Value>Serial number</Value>
+  </LocaleResource>
+  <LocaleResource Name="Admin.FoxNetSoft.Plugin.Tax.MultipleTaxes.Settings.SerialNumber.Hint">
+    <Value>Serial number.</Value>
+  </LocaleResource>
+  <LocaleResource Name="Admin.FoxNetSoft.Plugin.Tax.MultipleTaxes.Settings.ClearLogFile">
+    <Value>Clear the log-file</Value>
+  </LocaleResource>
+  <LocaleResource Name="Admin.FoxNetSoft.Plugin.Tax.MultipleTaxes.Settings.GetLogFile">
+    <Value>Download the log-file</Value>
+  </LocaleResource>
+  <LocaleResource Name="Admin.FoxNetSoft.Plugin.Tax.MultipleTaxes.Menu.Name">
+    <Value>Multiple Taxes</Value>
+  </LocaleResource>
+  <LocaleResource Name="Admin.FoxNetSoft.Plugin.Tax.MultipleTaxes.Menu.List">
+    <Value>List</Value>
+  </LocaleResource>
+  <LocaleResource Name="Admin.FoxNetSoft.Plugin.Tax.MultipleTaxes.Menu.Configure">
+    <Value>Configure</Value>
+  </LocaleResource>
+  <LocaleResource Name="Admin.FoxNetSoft.Plugin.Tax.MultipleTaxes.Fields.Store">
+    <Value>Store</Value>
+  </LocaleResource>
+  <LocaleResource Name="Admin.FoxNetSoft.Plugin.Tax.MultipleTaxes.Fields.Store.Hint">
+    <Value>If an asterisk is selected, then this shipping rate will apply to all stores.</Value>
+  </LocaleResource>
+  <LocaleResource Name="Admin.FoxNetSoft.Plugin.Tax.MultipleTaxes.Fields.Country">
+    <Value>Country</Value>
+  </LocaleResource>
+  <LocaleResource Name="Admin.FoxNetSoft.Plugin.Tax.MultipleTaxes.Fields.Country.Hint">
+    <Value>The country.</Value>
+  </LocaleResource>
+  <LocaleResource Name="Admin.FoxNetSoft.Plugin.Tax.MultipleTaxes.Fields.StateProvince">
+    <Value>State / province</Value>
+  </LocaleResource>
+  <LocaleResource Name="Admin.FoxNetSoft.Plugin.Tax.MultipleTaxes.Fields.StateProvince.Hint">
+    <Value>If an asterisk is selected, then this tax rate will apply to all customers from the given country, regardless of the state.</Value>
+  </LocaleResource>
+  <LocaleResource Name="Admin.FoxNetSoft.Plugin.Tax.MultipleTaxes.Fields.Zip">
+    <Value>Zip</Value>
+  </LocaleResource>
+  <LocaleResource Name="Admin.FoxNetSoft.Plugin.Tax.MultipleTaxes.Fields.Zip.Hint">
+    <Value>Zip / postal code. If zip is empty, then this tax rate will apply to all customers from the given country or state, regardless of the zip code.</Value>
+  </LocaleResource>
+  <LocaleResource Name="Admin.FoxNetSoft.Plugin.Tax.MultipleTaxes.Fields.TaxCategory">
+    <Value>Tax category</Value>
+  </LocaleResource>
+  <LocaleResource Name="Admin.FoxNetSoft.Plugin.Tax.MultipleTaxes.Fields.TaxCategory.Hint">
+    <Value>The tax category.</Value>
+  </LocaleResource>
+  <LocaleResource Name="Admin.FoxNetSoft.Plugin.Tax.MultipleTaxes.Fields.Percentage">
+    <Value>Percentage 1 (GST)</Value>
+  </LocaleResource>
+  <LocaleResource Name="Admin.FoxNetSoft.Plugin.Tax.MultipleTaxes.Fields.Percentage.Hint">
+    <Value>The tax rate (ex. GST).</Value>
+  </LocaleResource>
+  <LocaleResource Name="Admin.FoxNetSoft.Plugin.Tax.MultipleTaxes.Fields.Percentage2">
+    <Value>Percentage 2 (PST)</Value>
+  </LocaleResource>
+  <LocaleResource Name="Admin.FoxNetSoft.Plugin.Tax.MultipleTaxes.Fields.Percentage2.Hint">
+    <Value>The tax rate 2 (ex. PST).</Value>
+  </LocaleResource>
+  <LocaleResource Name="Admin.FoxNetSoft.Plugin.Tax.MultipleTaxes.Fields.Percentage3">
+    <Value>Percentage 3 (QST)</Value>
+  </LocaleResource>
+  <LocaleResource Name="Admin.FoxNetSoft.Plugin.Tax.MultipleTaxes.Fields.Percentage3.Hint">
+    <Value>The tax rate 3 (ex. QST).</Value>
+  </LocaleResource>
+  <LocaleResource Name="Admin.FoxNetSoft.Plugin.Tax.MultipleTaxes.AddRecord">
+    <Value>Add tax rate</Value>
+  </LocaleResource>
+  <LocaleResource Name="Admin.FoxNetSoft.Plugin.Tax.MultipleTaxes.AddRecordTitle">
+    <Value>New tax rate</Value>
+  </LocaleResource>
+  <LocaleResource Name="FoxNetSoft.Plugin.Tax.MultipleTaxes.TaxRate1">
+    <Value>GST</Value>
+  </LocaleResource>
+  <LocaleResource Name="FoxNetSoft.Plugin.Tax.MultipleTaxes.TaxRate2">
+    <Value>PST</Value>
+  </LocaleResource>
+  <LocaleResource Name="FoxNetSoft.Plugin.Tax.MultipleTaxes.TaxRate3">
+    <Value>QST</Value>
+  </LocaleResource>
+  <LocaleResource Name="FoxNetSoft.Plugin.Tax.MultipleTaxes.HST">
+    <Value>HST</Value>
+  </LocaleResource>
+  <LocaleResource Name="Admin.FoxNetSoft.Plugin.Tax.MultipleTaxes.OverWrittenClass">
+    <Value>Error. The class {0} was overwriten the new class '{0}'. Uninstall another plugin or change it.</Value>
+  </LocaleResource>
+  <LocaleResource Name="Admin.FoxNetSoft.Plugin.Tax.MultipleTaxes.Settings.Warning.EnableDisplayTaxRates">
+		<Value>Warning!. Enable this parameter 'DisplayTaxRates'!</Value>
+	</LocaleResource>
+</Language>

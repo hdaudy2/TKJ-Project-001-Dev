@@ -146,6 +146,10 @@
     {
       "SystemName": "SevenSpikes.Theme.Emporium",
       "Version": "4.5"
+    },
+    {
+      "SystemName": "FoxNetSoft.MultipleTaxes",
+      "Version": "1.04"
     }
   ],
   "PluginNamesToUninstall": [],
