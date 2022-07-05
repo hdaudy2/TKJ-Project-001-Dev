@@ -1,0 +1,141 @@
+﻿@model FoxNetSoft.Plugin.Tax.MultipleTaxes.Models.ConfigurationModel
+@using Microsoft.AspNetCore.Mvc.Controllers
+@using Nop.Core
+@using Nop.Services.Plugins
+@inject IWebHelper webHelper
+@inject IPluginService pluginService
+@{
+    var plugin = pluginService.FindPluginByTypeInAssembly((this.ViewContext.ActionDescriptor as ControllerActionDescriptor).ControllerTypeInfo);
+
+    //friendly name
+    var friendlyName = plugin?.PluginDescriptor.FriendlyName;
+
+    //Misc plugins
+
+    var configureLocale = "Admin.Configuration.Plugins.Misc.Configure";
+    var backToLocale = "Admin.Configuration.Plugins.Misc.BackToList";
+    var listActionMethodName = "List";
+    var listControllerName = "Plugin";
+
+    //Layout = "_ConfigurePlugin";
+    Layout = "_AdminLayout";
+    NopHtml.SetActiveMenuItemSystemName("FoxNetSoft.MultipleTaxes.Configure");
+    ViewBag.PageTitle = T(configureLocale).Text + " - " + friendlyName;
+}
+<form asp-controller="MultipleTaxesSettings" asp-action="Configure" method="post">
+    <div class="content-header clearfix">
+        <h1 class="float-left">
+            @T(configureLocale) - @friendlyName
+            <small>
+                <i class="fa fa-arrow-circle-left"></i>
+                <a asp-action="@listActionMethodName" asp-controller="@listControllerName">@T(backToLocale)</a>
+            </small>
+        </h1>
+        <div class="float-right">
+            <button type="submit" name="save" class="btn btn-primary">
+                <i class="far fa-save"></i>
+                @T("Admin.Common.Save")
+            </button>
+        </div>
+    </div>
+    <div class="content">
+        <div class="form-horizontal">
+            @await Component.InvokeAsync("StoreScopeConfiguration")
+            <script>
+                $(document).ready(function () {
+                    $("#showDebugInfo").click(toggleshowDebugInfo);
+
+                    toggleshowDebugInfo();
+                });
+
+                function toggleshowDebugInfo() {
+                    if ($('#showDebugInfo').is(':checked')) {
+                        $('#pnlclearlogfile, #pnlgetlogfile').show();
+                    }
+                    else {
+                        $('#pnlclearlogfile, #pnlgetlogfile').hide();
+                    }
+                }
+            </script>
+            <div class="cards-group">
+                <div class="card card-default">
+                    <div class="card-body">
+                        <p>
+                            @if (Model.IsRegisted == true)
+                            {
+                                @T("Admin.FoxNetSoft.Plugin.Tax.MultipleTaxes.Settings.IsRegisted")
+                            }
+                            else
+                            {
+                                @T("Admin.FoxNetSoft.Plugin.Tax.MultipleTaxes.Settings.IsNoRegisted")
+                                <br />
+                                <a href="https://www.foxnetsoft.com/nopmultipletaxes" target="blank">Buy It Now</a>
+                            }
+                        </p>
+                    </div>
+                </div>
+                <div class="card card-default">
+                    <div class="card-body">
+                        <p>
+                            @T("Admin.FoxNetSoft.Plugin.Tax.MultipleTaxes.Settings.Warning.EnableDisplayTaxRates")
+                        </p>
+                        <div class="form-group row">
+                            <div class="col-md-3">
+                                <nop-override-store-checkbox asp-for="DisplayTaxRates_OverrideForStore" asp-input="DisplayTaxRates" asp-store-scope="@Model.ActiveStoreScopeConfiguration" />
+                                <nop-label asp-for="DisplayTaxRates" />
+                            </div>
+                            <div class="col-md-9">
+                                <nop-editor asp-for="DisplayTaxRates" />
+                                <span asp-validation-for="DisplayTaxRates"></span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="card card-default">
+                    <div class="card-body">
+                        <div class="form-group row">
+                            <div class="col-md-3">
+                                <nop-label asp-for="showDebugInfo" />
+                            </div>
+                            <div class="col-md-9">
+                                <nop-editor asp-for="showDebugInfo" />
+                                <span asp-validation-for="showDebugInfo"></span>
+                                <div id="pnlclearlogfile">
+                                    <a href="@Url.Action("ClearLogFile")" class="k-button">@T("Admin.FoxNetSoft.Plugin.Tax.MultipleTaxes.Settings.ClearLogFile")</a>
+                                </div>
+                                <div id="pnlgetlogfile">
+                                    <a href="@Url.Action("GetLogFile")" class="k-button">@T("Admin.FoxNetSoft.Plugin.Tax.MultipleTaxes.Settings.GetLogFile")</a>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-group row">
+                            <div class="col-md-3">
+                                <nop-label asp-for="StoreUrl" />
+                            </div>
+                            <div class="col-md-9">
+                                <input class="form-control text-box single-line" id="StoreUrl" name="StoreUrl" value="@Model.StoreUrl" type="text" readonly="readonly">
+                                <span asp-validation-for="StoreUrl"></span>
+                            </div>
+                        </div>
+                        <div class="form-group row">
+                            <div class="col-md-3">
+                                <nop-label asp-for="SerialNumber" />
+                            </div>
+                            <div class="col-md-9">
+                                <nop-editor asp-for="SerialNumber" />
+                                <span asp-validation-for="SerialNumber"></span>
+                            </div>
+                        </div>
+                        <p>
+                            Installation and configuring plug-in at Youtube <a href="http://www.youtube.com/foxnetsoft" target="blank">www.youtube.com/foxnetsoft</a>
+                            <br />
+                            Installation and configuring plug-in at our site <a href="https://www.foxnetsoft.com/documentation-nopmultipletaxes" target="blank">https://www.foxnetsoft.com/documentation-nopmultipletaxes</a>
+                            <br />
+                            <a href="https://www.foxnetsoft.com" target="blank">www.foxnetsoft.com</a>
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</form>

@@ -1,0 +1,23 @@
+{
+  "runtimeTarget": {
+    "name": ".NETCoreApp,Version=v6.0",
+    "signature": ""
+  },
+  "compilationOptions": {},
+  "targets": {
+    ".NETCoreApp,Version=v6.0": {
+      "FoxNetSoft.Plugin.Tax.MultipleTaxes/1.00": {
+        "runtime": {
+          "FoxNetSoft.Plugin.Tax.MultipleTaxes.dll": {}
+        }
+      }
+    }
+  },
+  "libraries": {
+    "FoxNetSoft.Plugin.Tax.MultipleTaxes/1.00": {
+      "type": "project",
+      "serviceable": false,
+      "sha512": ""
+    }
+  }
+}

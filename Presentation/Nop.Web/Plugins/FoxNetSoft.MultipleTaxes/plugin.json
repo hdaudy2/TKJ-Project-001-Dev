@@ -1,0 +1,11 @@
+﻿{
+  "Group": "Tax providers",
+  "FriendlyName": "Multiple Taxes",
+  "SystemName": "FoxNetSoft.MultipleTaxes",
+  "Version": "1.04",
+  "SupportedVersions": [ "4.50" ],
+  "Author": "FoxNetSoft",
+  "DisplayOrder": 1,
+  "FileName": "FoxNetSoft.Plugin.Tax.MultipleTaxes.dll",
+  "Description": "Add several taxes."
+}
