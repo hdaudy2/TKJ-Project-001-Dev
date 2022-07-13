@@ -4,6 +4,7 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Nop.Core;
 using Nop.Core.Domain.Messages;
+using Nop.Services.Customers;
 using Nop.Services.Helpers;
 using Nop.Services.Localization;
 using Nop.Services.Logging;
@@ -26,6 +27,7 @@ namespace Nop.Web.Areas.Admin.Controllers
         private readonly ICampaignModelFactory _campaignModelFactory;
         private readonly ICampaignService _campaignService;
         private readonly ICustomerActivityService _customerActivityService;
+        private readonly ICustomerService _customerService;
         private readonly IDateTimeHelper _dateTimeHelper;
         private readonly IEmailAccountService _emailAccountService;
         private readonly ILocalizationService _localizationService;
@@ -34,6 +36,7 @@ namespace Nop.Web.Areas.Admin.Controllers
         private readonly IPermissionService _permissionService;
         private readonly IStoreContext _storeContext;
         private readonly IStoreService _storeService;
+        private readonly IWorkContext _workContext;
 
         #endregion
 
@@ -43,6 +46,7 @@ namespace Nop.Web.Areas.Admin.Controllers
             ICampaignModelFactory campaignModelFactory,
             ICampaignService campaignService,
             ICustomerActivityService customerActivityService,
+            ICustomerService customerService,
             IDateTimeHelper dateTimeHelper,
             IEmailAccountService emailAccountService,
             ILocalizationService localizationService,
@@ -50,12 +54,14 @@ namespace Nop.Web.Areas.Admin.Controllers
             INewsLetterSubscriptionService newsLetterSubscriptionService,
             IPermissionService permissionService,
             IStoreContext storeContext,
-            IStoreService storeService)
+            IStoreService storeService,
+            IWorkContext workContext)
         {
             _emailAccountSettings = emailAccountSettings;
             _campaignModelFactory = campaignModelFactory;
             _campaignService = campaignService;
             _customerActivityService = customerActivityService;
+            _customerService = customerService;
             _dateTimeHelper = dateTimeHelper;
             _emailAccountService = emailAccountService;
             _localizationService = localizationService;
@@ -64,6 +70,7 @@ namespace Nop.Web.Areas.Admin.Controllers
             _permissionService = permissionService;
             _storeContext = storeContext;
             _storeService = storeService;
+            _workContext = workContext;
         }
 
         #endregion
@@ -195,6 +202,10 @@ namespace Nop.Web.Areas.Admin.Controllers
             if (campaign == null)
                 return RedirectToAction("List");
 
+            var isAdmin = await _customerService.IsAdminAsync(await _workContext.GetCurrentCustomerAsync());
+
+            if(model.StoreId <= 0 && !isAdmin) model.StoreId = (await _storeContext.GetCurrentStoreAsync()).Id;
+            
             if (ModelState.IsValid)
             {
                 campaign = model.ToEntity(campaign);
