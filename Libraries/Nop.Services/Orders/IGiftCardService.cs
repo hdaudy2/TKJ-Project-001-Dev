@@ -34,6 +34,7 @@ namespace Nop.Services.Orders
         /// </summary>
         /// <param name="purchasedWithOrderId">Associated order ID; null to load all records</param>
         /// <param name="usedWithOrderId">The order ID in which the gift card was used; null to load all records</param>
+        /// <param name="storeId">The Store ID which gift card are limited to; null to load all records</param>
         /// <param name="createdFromUtc">Created date from (UTC); null to load all records</param>
         /// <param name="createdToUtc">Created date to (UTC); null to load all records</param>
         /// <param name="isGiftCardActivated">Value indicating whether gift card is activated; null to load all records</param>
@@ -45,7 +46,7 @@ namespace Nop.Services.Orders
         /// A task that represents the asynchronous operation
         /// The task result contains the gift cards
         /// </returns>
-        Task<IPagedList<GiftCard>> GetAllGiftCardsAsync(int? purchasedWithOrderId = null, int? usedWithOrderId = null,
+        Task<IPagedList<GiftCard>> GetAllGiftCardsAsync(int? purchasedWithOrderId = null, int? usedWithOrderId = null, int? storeId = null,
             DateTime? createdFromUtc = null, DateTime? createdToUtc = null,
             bool? isGiftCardActivated = null, string giftCardCouponCode = null,
             string recipientName = null,

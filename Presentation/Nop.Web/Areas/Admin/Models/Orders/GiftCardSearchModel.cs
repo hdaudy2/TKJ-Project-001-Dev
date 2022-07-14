@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System; //Multi-Tenant Plugin
+using System.Collections.Generic;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Nop.Web.Framework.Mvc.ModelBinding;
 using Nop.Web.Framework.Models;
@@ -29,6 +30,10 @@ namespace Nop.Web.Areas.Admin.Models.Orders
 
         [NopResourceDisplayName("Admin.GiftCards.List.Activated")]
         public int ActivatedId { get; set; }
+
+        #region Multi-Tenant Plugin
+        public Nullable<int> storeId { get; set; }
+        #endregion
 
         [NopResourceDisplayName("Admin.GiftCards.List.Activated")]
         public IList<SelectListItem> ActivatedList { get; set; }

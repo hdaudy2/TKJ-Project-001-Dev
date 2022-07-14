@@ -44,6 +44,13 @@ namespace Nop.Web.Areas.Admin.Models.Orders
 
         [NopResourceDisplayName("Admin.GiftCards.Fields.GiftCardCouponCode")]
         public string GiftCardCouponCode { get; set; }
+        
+        #region Multi-Tenant Plugin
+        /// <summary>
+        /// Gets or sets the date and time of instance creation
+        /// </summary>
+        public int LimitedToStore { get; set; }
+        #endregion
 
         [NopResourceDisplayName("Admin.GiftCards.Fields.RecipientName")]
         public string RecipientName { get; set; }
