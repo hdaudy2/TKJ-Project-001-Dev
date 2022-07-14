@@ -35,6 +35,7 @@ namespace Nop.Services.Discounts
         /// Gets all discounts
         /// </summary>
         /// <param name="discountType">Discount type; pass null to load all records</param>
+        /// <param name="storeId">The Store ID which gift card are limited to; null to load all records</param>
         /// <param name="couponCode">Coupon code to find (exact match); pass null or empty to load all records</param>
         /// <param name="discountName">Discount name; pass null or empty to load all records</param>
         /// <param name="showHidden">A value indicating whether to show expired and not started discounts</param>
@@ -44,7 +45,7 @@ namespace Nop.Services.Discounts
         /// A task that represents the asynchronous operation
         /// The task result contains the discounts
         /// </returns>
-        Task<IList<Discount>> GetAllDiscountsAsync(DiscountType? discountType = null,
+        Task<IList<Discount>> GetAllDiscountsAsync(DiscountType? discountType = null, int? storeId = null,
             string couponCode = null, string discountName = null, bool showHidden = false,
             DateTime? startDateUtc = null, DateTime? endDateUtc = null);
 

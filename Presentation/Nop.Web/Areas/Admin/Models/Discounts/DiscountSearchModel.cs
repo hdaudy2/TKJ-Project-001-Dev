@@ -42,6 +42,10 @@ namespace Nop.Web.Areas.Admin.Models.Discounts
         [UIHint("DateNullable")]
         public DateTime? SearchEndDate { get; set; }
 
+        #region Multi-Tenant Plugin
+        public Nullable<int> storeId { get; set; }
+        #endregion
+
         #endregion
     }
 }

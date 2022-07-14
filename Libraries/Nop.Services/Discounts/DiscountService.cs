@@ -167,6 +167,7 @@ namespace Nop.Services.Discounts
         /// Gets all discounts
         /// </summary>
         /// <param name="discountType">Discount type; pass null to load all records</param>
+        /// <param name="storeId">The Store ID which gift card are limited to; null to load all records</param>
         /// <param name="couponCode">Coupon code to find (exact match); pass null or empty to load all records</param>
         /// <param name="discountName">Discount name; pass null or empty to load all records</param>
         /// <param name="showHidden">A value indicating whether to show expired and not started discounts</param>
@@ -176,7 +177,7 @@ namespace Nop.Services.Discounts
         /// A task that represents the asynchronous operation
         /// The task result contains the discounts
         /// </returns>
-        public virtual async Task<IList<Discount>> GetAllDiscountsAsync(DiscountType? discountType = null,
+        public virtual async Task<IList<Discount>> GetAllDiscountsAsync(DiscountType? discountType = null, int? storeId = null,
             string couponCode = null, string discountName = null, bool showHidden = false,
             DateTime? startDateUtc = null, DateTime? endDateUtc = null)
         {
@@ -209,6 +210,10 @@ namespace Nop.Services.Discounts
             //that's why we filter discounts by type and dates on the application layer
             if (discountType.HasValue)
                 discounts = discounts.Where(discount => discount.DiscountType == discountType.Value);
+
+            #region Multi-Tenant Plugin
+                if (storeId.HasValue) discounts = discounts.Where(discount => 0 == discount.LimitedToStore || storeId.Value == discount.LimitedToStore);
+            #endregion
 
             //filter by dates
             if (startDateUtc.HasValue)
@@ -508,6 +513,14 @@ namespace Nop.Services.Discounts
 
             //invalid by default
             var result = new DiscountValidationResult();
+
+            #region Multi-Tenant Plugin
+            var currentStore = await _storeContext.GetCurrentStoreAsync();
+            if (discount.LimitedToStore > 0 && discount.LimitedToStore != currentStore.Id){
+                result.Errors = new List<string> {await _localizationService.GetResourceAsync("ShoppingCart.DiscountCouponCode.CannotBeFound") };
+                    return result;
+            }
+            #endregion
 
             //check coupon code
             if (discount.RequiresCouponCode)
