@@ -390,11 +390,11 @@
   }
 
   .header-links a {
-    display: inline-block;
+    /* display: inline-block; */
     font-size: 13px;
     color: white;
     transition: color 0.2s ease;
-    margin-left: 10px;
+    /* margin-left: 10px; */
   }
 
   .header-links .profile-menu-box .ico-inbox {
