@@ -4,6 +4,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Nop.Core.Caching;
+using Nop.Core;
 using Nop.Core.Domain.Catalog;
 using Nop.Core.Domain.Discounts;
 using Nop.Core.Domain.Gdpr;
@@ -11,6 +12,7 @@ using Nop.Core.Domain.Logging;
 using Nop.Core.Domain.Orders;
 using Nop.Core.Domain.Payments;
 using Nop.Core.Domain.Shipping;
+using Nop.Core.Domain.Stores;
 using Nop.Core.Domain.Tax;
 using Nop.Services;
 using Nop.Services.Catalog;
@@ -64,9 +66,11 @@ namespace Nop.Web.Areas.Admin.Factories
         private readonly IStateProvinceService _stateProvinceService;
         private readonly IStaticCacheManager _staticCacheManager;
         private readonly IStoreService _storeService;
+        private readonly IStoreContext _storeContext;
         private readonly ITaxCategoryService _taxCategoryService;
         private readonly ITopicTemplateService _topicTemplateService;
         private readonly IVendorService _vendorService;
+        private readonly IWorkContext _workContext;
 
         #endregion
 
@@ -92,9 +96,11 @@ namespace Nop.Web.Areas.Admin.Factories
             IStateProvinceService stateProvinceService,
             IStaticCacheManager staticCacheManager,
             IStoreService storeService,
+            IStoreContext storeContext,
             ITaxCategoryService taxCategoryService,
             ITopicTemplateService topicTemplateService,
-            IVendorService vendorService)
+            IVendorService vendorService,
+            IWorkContext workContext)
         {
             _categoryService = categoryService;
             _categoryTemplateService = categoryTemplateService;
@@ -116,9 +122,11 @@ namespace Nop.Web.Areas.Admin.Factories
             _stateProvinceService = stateProvinceService;
             _staticCacheManager = staticCacheManager;
             _storeService = storeService;
+            _storeContext = storeContext;
             _taxCategoryService = taxCategoryService;
             _topicTemplateService = topicTemplateService;
             _vendorService = vendorService;
+            _workContext = workContext;
         }
 
         #endregion
@@ -471,13 +479,21 @@ namespace Nop.Web.Areas.Admin.Factories
             //prepare available stores
             #region Extensions by QuanNH
 
-            var _workContext = Nop.Core.Infrastructure.EngineContext.Current.Resolve<Nop.Core.IWorkContext>();
-            var availableStores = await _storeService.GetAllStoresByEntityNameAsync((await _workContext.GetCurrentCustomerAsync()).Id, "Stores");
-            if (availableStores.Count <= 0)
-            {
-                availableStores = await _storeService.GetAllStoresAsync();
-                await PrepareDefaultItemAsync(items, withSpecialDefaultItem, defaultItemText);
-            }
+            // var _workContext = Nop.Core.Infrastructure.EngineContext.Current.Resolve<Nop.Core.IWorkContext>();
+            // var availableStores = await _storeService.GetAllStoresByEntityNameAsync((await _workContext.GetCurrentCustomerAsync()).Id, "Stores");
+            // if (availableStores.Count <= 0)
+            // {
+            //     availableStores = await _storeService.GetAllStoresAsync();
+            //     await PrepareDefaultItemAsync(items, withSpecialDefaultItem, defaultItemText);
+            // }
+
+            var isAdmin = await _customerService.IsAdminAsync(await _workContext.GetCurrentCustomerAsync());
+
+            // Get current store
+            IList<Store> availableStores = new List<Store>();
+            availableStores.Add(await _storeContext.GetCurrentStoreAsync());
+
+            if(isAdmin) availableStores = await _storeService.GetAllStoresAsync();
 
             foreach (var store in availableStores)
             {
@@ -523,9 +539,13 @@ namespace Nop.Web.Areas.Admin.Factories
         {
             if (items == null)
                 throw new ArgumentNullException(nameof(items));
+            
+            // Get current store
+            var store = await _storeContext.GetCurrentStoreAsync();
+            var isAdmin = await _customerService.IsAdminAsync(await _workContext.GetCurrentCustomerAsync());
 
-            //prepare available email accounts
-            var availableEmailAccounts = await _emailAccountService.GetAllEmailAccountsAsync();
+            //prepare available email accounts for the current store
+            var availableEmailAccounts = !isAdmin ? await _emailAccountService.GetAllEmailAccountsAsync(store.Id) : await _emailAccountService.GetAllEmailAccountsAsync();
             foreach (var emailAccount in availableEmailAccounts)
             {
                 items.Add(new SelectListItem { Value = emailAccount.Id.ToString(), Text = $"{emailAccount.DisplayName} ({emailAccount.Email})" });
