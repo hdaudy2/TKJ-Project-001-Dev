@@ -67,6 +67,13 @@ namespace Nop.Core.Domain.Orders
         /// Gets or sets the date and time of instance creation
         /// </summary>
         public DateTime CreatedOnUtc { get; set; }
+        
+        #region Multi-Tenant Plugin
+        /// <summary>
+        /// Gets or sets the date and time of instance creation
+        /// </summary>
+        public int LimitedToStore { get; set; }
+        #endregion
 
         /// <summary>
         /// Gets or sets the gift card type

@@ -20,6 +20,7 @@ namespace Nop.Services.Orders
 
         private readonly ICustomerService _customerService;
         private readonly IEventPublisher _eventPublisher;
+        private readonly IStoreContext _storeContext; //Multi-Tenant Plugin
         private readonly IRepository<GiftCard> _giftCardRepository;
         private readonly IRepository<GiftCardUsageHistory> _giftCardUsageHistoryRepository;
         private readonly IRepository<OrderItem> _orderItemRepository;
@@ -29,12 +30,14 @@ namespace Nop.Services.Orders
 
         public GiftCardService(ICustomerService customerService,
             IEventPublisher eventPublisher,
+            IStoreContext storeContext,
             IRepository<GiftCard> giftCardRepository,
             IRepository<GiftCardUsageHistory> giftCardUsageHistoryRepository,
             IRepository<OrderItem> orderItemRepository)
         {
             _customerService = customerService;
             _eventPublisher = eventPublisher;
+            _storeContext = storeContext;
             _giftCardRepository = giftCardRepository;
             _giftCardUsageHistoryRepository = giftCardUsageHistoryRepository;
             _orderItemRepository = orderItemRepository;
@@ -72,6 +75,7 @@ namespace Nop.Services.Orders
         /// </summary>
         /// <param name="purchasedWithOrderId">Associated order ID; null to load all records</param>
         /// <param name="usedWithOrderId">The order ID in which the gift card was used; null to load all records</param>
+        /// <param name="storeId">The Store ID which gift card are limited to; null to load all records</param>
         /// <param name="createdFromUtc">Created date from (UTC); null to load all records</param>
         /// <param name="createdToUtc">Created date to (UTC); null to load all records</param>
         /// <param name="isGiftCardActivated">Value indicating whether gift card is activated; null to load all records</param>
@@ -83,7 +87,7 @@ namespace Nop.Services.Orders
         /// A task that represents the asynchronous operation
         /// The task result contains the gift cards
         /// </returns>
-        public virtual async Task<IPagedList<GiftCard>> GetAllGiftCardsAsync(int? purchasedWithOrderId = null, int? usedWithOrderId = null,
+        public virtual async Task<IPagedList<GiftCard>> GetAllGiftCardsAsync(int? purchasedWithOrderId = null, int? usedWithOrderId = null, int? storeId = null,
             DateTime? createdFromUtc = null, DateTime? createdToUtc = null,
             bool? isGiftCardActivated = null, string giftCardCouponCode = null,
             string recipientName = null,
@@ -104,7 +108,10 @@ namespace Nop.Services.Orders
                         join gcuh in _giftCardUsageHistoryRepository.Table on gc.Id equals gcuh.GiftCardId
                         where gcuh.UsedWithOrderId == usedWithOrderId
                         select gc;
-
+                #region Multi-Tenant Plugin
+                if (storeId.HasValue)
+                    query = query.Where(gc => 0 == gc.LimitedToStore || storeId.Value == gc.LimitedToStore);
+                #endregion
                 if (createdFromUtc.HasValue)
                     query = query.Where(gc => createdFromUtc.Value <= gc.CreatedOnUtc);
                 if (createdToUtc.HasValue)
@@ -308,6 +315,10 @@ namespace Nop.Services.Orders
                 throw new ArgumentNullException(nameof(giftCard));
 
             if (!giftCard.IsGiftCardActivated)
+                return false;
+            
+            var currentStore = await _storeContext.GetCurrentStoreAsync();
+            if (giftCard.LimitedToStore > 0 && giftCard.LimitedToStore != currentStore.Id)
                 return false;
 
             var remainingAmount = await GetGiftCardRemainingAmountAsync(giftCard);

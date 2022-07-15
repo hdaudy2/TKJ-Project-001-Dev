@@ -137,6 +137,7 @@ namespace Nop.Web.Areas.Admin.Factories
             //get gift cards
             var giftCards = await _giftCardService.GetAllGiftCardsAsync(isGiftCardActivated: isActivatedOnly,
                 giftCardCouponCode: searchModel.CouponCode,
+                storeId: searchModel.storeId,
                 recipientName: searchModel.RecipientName,
                 pageIndex: searchModel.Page - 1, pageSize: searchModel.PageSize);
 

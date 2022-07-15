@@ -7,6 +7,7 @@ using Nop.Core.Domain.Directory;
 using Nop.Core.Domain.Localization;
 using Nop.Core.Domain.Orders;
 using Nop.Services.Catalog;
+using Nop.Services.Customers; //Multi-Tenant Plugin
 using Nop.Services.Directory;
 using Nop.Services.Helpers;
 using Nop.Services.Localization;
@@ -26,6 +27,7 @@ namespace Nop.Web.Areas.Admin.Controllers
     {
         #region Fields
 
+        private readonly ICustomerService _customerService; //Multi-Tenant Plugin
         private readonly CurrencySettings _currencySettings;
         private readonly ICurrencyService _currencyService;
         private readonly ICustomerActivityService _customerActivityService;
@@ -38,6 +40,8 @@ namespace Nop.Web.Areas.Admin.Controllers
         private readonly IOrderService _orderService;
         private readonly IPermissionService _permissionService;
         private readonly IPriceFormatter _priceFormatter;
+        private readonly IStoreContext _storeContext; //Multi-Tenant Plugin
+        private readonly IWorkContext _workContext; //Multi-Tenant Plugin
         private readonly IWorkflowMessageService _workflowMessageService;
         private readonly LocalizationSettings _localizationSettings;
 
@@ -45,7 +49,8 @@ namespace Nop.Web.Areas.Admin.Controllers
 
         #region Ctor
 
-        public GiftCardController(CurrencySettings currencySettings,
+        public GiftCardController(ICustomerService customerService,
+            CurrencySettings currencySettings,
             ICurrencyService currencyService,
             ICustomerActivityService customerActivityService,
             IDateTimeHelper dateTimeHelper,
@@ -57,9 +62,12 @@ namespace Nop.Web.Areas.Admin.Controllers
             IOrderService orderService,
             IPermissionService permissionService,
             IPriceFormatter priceFormatter,
+            IStoreContext storeContext,
+            IWorkContext workContext,
             IWorkflowMessageService workflowMessageService,
             LocalizationSettings localizationSettings)
         {
+            _customerService = customerService;
             _currencySettings = currencySettings;
             _currencyService = currencyService;
             _customerActivityService = customerActivityService;
@@ -72,6 +80,8 @@ namespace Nop.Web.Areas.Admin.Controllers
             _orderService = orderService;
             _permissionService = permissionService;
             _priceFormatter = priceFormatter;
+            _storeContext = storeContext;
+            _workContext = workContext;
             _workflowMessageService = workflowMessageService;
             _localizationSettings = localizationSettings;
         }
@@ -102,6 +112,14 @@ namespace Nop.Web.Areas.Admin.Controllers
             if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageGiftCards))
                 return await AccessDeniedDataTablesJson();
 
+            #region Multi-Tenant Plugin
+            var currentStore = await _storeContext.GetCurrentStoreAsync();
+            var isAdmin = await _customerService.IsAdminAsync(await _workContext.GetCurrentCustomerAsync());
+            
+            if(isAdmin) searchModel.storeId = null;
+            if(searchModel.storeId == null && !isAdmin) searchModel.storeId = currentStore.Id;
+            #endregion
+
             //prepare model
             var model = await _giftCardModelFactory.PrepareGiftCardListModelAsync(searchModel);
 
@@ -124,6 +142,14 @@ namespace Nop.Web.Areas.Admin.Controllers
         {
             if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageGiftCards))
                 return AccessDeniedView();
+
+            #region Multi-Tenant Plugin
+            var currentStore = await _storeContext.GetCurrentStoreAsync();
+            var isAdmin = await _customerService.IsAdminAsync(await _workContext.GetCurrentCustomerAsync());
+            
+            if(isAdmin) model.LimitedToStore = 0;
+            else model.LimitedToStore = currentStore.Id;
+            #endregion
 
             if (ModelState.IsValid)
             {
