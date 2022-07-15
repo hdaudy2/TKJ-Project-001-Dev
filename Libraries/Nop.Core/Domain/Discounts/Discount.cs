@@ -61,6 +61,13 @@ namespace Nop.Core.Domain.Discounts
         /// Gets or sets the coupon code
         /// </summary>
         public string CouponCode { get; set; }
+        
+        #region Multi-Tenant Plugin
+        /// <summary>
+        /// Gets or sets the LimitedToStore
+        /// </summary>
+        public int LimitedToStore { get; set; }
+        #endregion
 
         /// <summary>
         /// Gets or sets a value indicating whether discount can be used simultaneously with other discounts (with the same discount type)

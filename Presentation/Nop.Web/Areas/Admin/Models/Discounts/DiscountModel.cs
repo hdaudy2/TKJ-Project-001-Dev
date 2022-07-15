@@ -114,5 +114,12 @@ namespace Nop.Web.Areas.Admin.Models.Discounts
         public DiscountManufacturerSearchModel DiscountManufacturerSearchModel { get; set; }
 
         #endregion
+
+        #region Multi-Tenant Plugin
+        /// <summary>
+        /// Gets or sets the LimitedToStore use to restrict to store
+        /// </summary>
+        public int LimitedToStore { get; set; }
+        #endregion
     }
 }

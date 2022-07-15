@@ -4,9 +4,11 @@ using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
+using Nop.Core; //Multi-Tenant Plugin
 using Nop.Core.Domain.Catalog;
 using Nop.Core.Domain.Discounts;
 using Nop.Services.Catalog;
+using Nop.Services.Customers; //Multi-Tenant Plugin
 using Nop.Services.Discounts;
 using Nop.Services.Localization;
 using Nop.Services.Logging;
@@ -28,6 +30,7 @@ namespace Nop.Web.Areas.Admin.Controllers
         private readonly CatalogSettings _catalogSettings;
         private readonly ICategoryService _categoryService;
         private readonly ICustomerActivityService _customerActivityService;
+        private readonly ICustomerService _customerService; //Multi-Tenant Plugin
         private readonly IDiscountModelFactory _discountModelFactory;
         private readonly IDiscountPluginManager _discountPluginManager;
         private readonly IDiscountService _discountService;
@@ -36,6 +39,8 @@ namespace Nop.Web.Areas.Admin.Controllers
         private readonly INotificationService _notificationService;
         private readonly IPermissionService _permissionService;
         private readonly IProductService _productService;
+        private readonly IStoreContext _storeContext; //Multi-Tenant Plugin
+        private readonly IWorkContext _workContext; //Multi-Tenant Plugin
 
         #endregion
 
@@ -44,6 +49,7 @@ namespace Nop.Web.Areas.Admin.Controllers
         public DiscountController(CatalogSettings catalogSettings,
             ICategoryService categoryService,
             ICustomerActivityService customerActivityService,
+            ICustomerService customerService,
             IDiscountModelFactory discountModelFactory,
             IDiscountPluginManager discountPluginManager,
             IDiscountService discountService,
@@ -51,11 +57,14 @@ namespace Nop.Web.Areas.Admin.Controllers
             IManufacturerService manufacturerService,
             INotificationService notificationService,
             IPermissionService permissionService,
-            IProductService productService)
+            IProductService productService,
+            IStoreContext storeContext,
+            IWorkContext workContext)
         {
             _catalogSettings = catalogSettings;
             _categoryService = categoryService;
             _customerActivityService = customerActivityService;
+            _customerService = customerService; //Multi-Tenant Plugin
             _discountModelFactory = discountModelFactory;
             _discountPluginManager = discountPluginManager;
             _discountService = discountService;
@@ -64,6 +73,8 @@ namespace Nop.Web.Areas.Admin.Controllers
             _notificationService = notificationService;
             _permissionService = permissionService;
             _productService = productService;
+            _storeContext = storeContext; //Multi-Tenant Plugin
+            _workContext = workContext; //Multi-Tenant Plugin
         }
 
         #endregion
@@ -98,6 +109,14 @@ namespace Nop.Web.Areas.Admin.Controllers
             if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageDiscounts))
                 return await AccessDeniedDataTablesJson();
 
+            #region Multi-Tenant Plugin
+            var currentStore = await _storeContext.GetCurrentStoreAsync();
+            var isAdmin = await _customerService.IsAdminAsync(await _workContext.GetCurrentCustomerAsync());
+
+            if(isAdmin) searchModel.storeId = null;
+            if(searchModel.storeId == null && !isAdmin) searchModel.storeId = currentStore.Id;
+            #endregion
+
             //prepare model
             var model = await _discountModelFactory.PrepareDiscountListModelAsync(searchModel);
 
@@ -120,6 +139,14 @@ namespace Nop.Web.Areas.Admin.Controllers
         {
             if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageDiscounts))
                 return AccessDeniedView();
+
+            #region Multi-Tenant Plugin
+            var currentStore = await _storeContext.GetCurrentStoreAsync();
+            var isAdmin = await _customerService.IsAdminAsync(await _workContext.GetCurrentCustomerAsync());
+
+            if(isAdmin) model.LimitedToStore = 0;
+            else model.LimitedToStore = currentStore.Id;
+            #endregion
 
             if (ModelState.IsValid)
             {

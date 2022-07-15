@@ -223,6 +223,7 @@ namespace Nop.Web.Areas.Admin.Factories
             //get discounts
             var discounts = (await _discountService.GetAllDiscountsAsync(showHidden: true,
                 discountType: discountType,
+                storeId: searchModel.storeId,
                 couponCode: searchModel.SearchDiscountCouponCode,
                 discountName: searchModel.SearchDiscountName,
                 startDateUtc: startDateUtc,
