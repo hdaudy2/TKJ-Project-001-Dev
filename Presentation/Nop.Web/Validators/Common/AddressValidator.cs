@@ -1,4 +1,5 @@
 ﻿using System.Linq;
+using System.Text.RegularExpressions;
 using FluentValidation;
 using Nop.Core.Domain.Common;
 using Nop.Core.Domain.Customers;
@@ -86,10 +87,36 @@ namespace Nop.Web.Validators.Common
             if (addressSettings.PhoneEnabled)
             {
                 RuleFor(x => x.PhoneNumber).IsPhoneNumber(customerSettings).WithMessageAwait(localizationService.GetResourceAsync("Account.Fields.Phone.NotValid"));
+                
+                RuleFor(x => x.PhoneNumber).Must((x, context) =>
+                {
+                    if(context != null){
+                        var regex = @"^\(?([0-9]{3})\)?[-.●]?([0-9]{3})[-.●]?([0-9]{4})$";
+                        var match = Regex.Match(context, regex, RegexOptions.IgnoreCase); 
+                        if (!match.Success)
+                            return false;
+                    }
+
+                    return true;
+                }).WithMessageAwait(localizationService.GetResourceAsync("Account.Fields.Phone.NotValid"));
             }
             if (addressSettings.FaxRequired && addressSettings.FaxEnabled)
             {
                 RuleFor(x => x.FaxNumber).NotEmpty().WithMessageAwait(localizationService.GetResourceAsync("Account.Fields.Fax.Required"));
+            }
+            if (addressSettings.FaxEnabled)
+            {
+                RuleFor(x => x.FaxNumber).Must((x, context) =>
+                {
+                    if(context != null){
+                        var regex = @"^\(?([0-9]{3})\)?[-.●]?([0-9]{3})[-.●]?([0-9]{4})$";
+                        var match = Regex.Match(context, regex, RegexOptions.IgnoreCase); 
+                        if (!match.Success)
+                            return false;
+                    }
+
+                    return true;
+                }).WithMessageAwait(localizationService.GetResourceAsync("Account.Fields.Fax.NotValid"));
             }
         }
     }
