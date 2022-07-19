@@ -22,6 +22,8 @@
       <p>
         <span style="margin-bottom: 5px">%Order.CreatedOn%</span>
         <br />
+        Hello %Order.CustomerFullName%,
+        <br />
         This email is to confirm your order at %Store.URL%
         <br />
         Your web reference number is <strong> %Order.OrderNumber% </strong>
@@ -38,7 +40,7 @@
           </div>
           <div style="margin-bottom: 5px">%Order.BillingZipPostalCode%</div>
           <div style="margin-bottom: 5px">
-            %Phone: %Order.BillingPhoneNumber%
+            Phone: %Order.BillingPhoneNumber%
           </div>
         </div>
       </div>
@@ -56,7 +58,7 @@
           </div>
           <div style="margin-bottom: 5px">%Order.ShippingZipPostalCode%</div>
           <div style="margin-bottom: 5px">
-            %Phone: %Order.ShippingPhoneNumber%
+            Phone: %Order.ShippingPhoneNumber%
           </div>
         </div>
       </div>
