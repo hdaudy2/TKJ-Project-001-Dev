@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>OrderPlaced.CustomerNotification</title>
+  </head>
+  <body>
+    <div
+      style="
+        margin: 0px;
+        padding: 0px;
+        box-sizing: border-box;
+        font-size: 18px;
+        font-family: calibri;
+      "
+    >
+      <h1 style="font-size: 22px; margin-bottom: 10px">
+        Order Confirmation Email
+      </h1>
+      <p>
+        <span style="margin-bottom: 5px">%Order.CreatedOn%</span>
+        <br />
+        This email is to confirm your order at %Store.URL%
+        <br />
+        Your web reference number is <strong> %Order.OrderNumber% </strong>
+      </p>
+      <div style="width: 100%; margin-top: 20px">
+        <div style="font-weight: 600; margin-bottom: 10px">Billing Address</div>
+        <div style="padding: 10px; background-color: #ddd">
+          <div style="margin-bottom: 5px">
+            %Order.BillingAddress1%, %Order.BillingAddress2%
+          </div>
+          <div style="margin-bottom: 5px">
+            %Order.BillingCity%, %Order.BillingStateProvince%,
+            %Order.BillingCountry%
+          </div>
+          <div style="margin-bottom: 5px">%Order.BillingZipPostalCode%</div>
+          <div style="margin-bottom: 5px">
+            %Phone: %Order.BillingPhoneNumber%
+          </div>
+        </div>
+      </div>
+      <div style="width: 100%; margin-top: 20px">
+        <div style="font-weight: 600; margin-bottom: 10px">
+          Shipping Address
+        </div>
+        <div style="padding: 10px; background-color: #ddd">
+          <div style="margin-bottom: 5px">
+            %Order.ShippingAddress1%, %Order.ShippingAddress2%
+          </div>
+          <div style="margin-bottom: 5px">
+            %Order.ShippingCity%, %Order.ShippingStateProvince%,
+            %Order.ShippingCountry%
+          </div>
+          <div style="margin-bottom: 5px">%Order.ShippingZipPostalCode%</div>
+          <div style="margin-bottom: 5px">
+            %Phone: %Order.ShippingPhoneNumber%
+          </div>
+        </div>
+      </div>
+      <div style="width: 100%; margin-top: 20px">
+        <div style="font-weight: 600; margin-bottom: 10px">Shipping Method</div>
+        <div style="padding: 10px; background-color: #ddd">
+          <div style="margin-bottom: 5px">%Order.ShippingMethod%</div>
+        </div>
+      </div>
+      <div style="width: 100%; margin-top: 20px">
+        <div style="font-weight: 600; margin-bottom: 10px">
+          Order Information
+        </div>
+        <div>
+          <div style="margin-bottom: 5px">Shipping instruction: None</div>
+          <div style="margin-bottom: 20px">%Order.Product(s)%</div>
+          <div style="margin-bottom: 5px">
+            <strong>Payment Method: </strong>%Order.PaymentMethod%
+          </div>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>

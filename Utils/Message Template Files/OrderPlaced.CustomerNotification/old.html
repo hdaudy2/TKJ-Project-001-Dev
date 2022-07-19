@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>OrderPlaced.CustomerNotification</title>
+  </head>
+  <body>
+    <div style="font-family: calibri; font-size: 18px;">
+      <div style="width: auto; height: auto; border: 2px solid black;">%Order.CreatedOn%<br />This email is to confirm your order at https://edmonton.premacanada.ca/<br />Your web reference number is %Order.OrderNumber%<br />
+      <h3>Billing Address</h3>
+      <div style="display: flex;"><br />
+      <div style="padding: 20px 0px; background-color: lightgrey;">%Order.BillingAddress1%,%Order.BillingAddress2%<br />%Order.BillingStateProvince% ,%Order.BillingCity%,%Order.BillingCountry%<br />%Order.BillingZipPostalCode%<br />Phone: %Order.BillingPhoneNumber%</div>
+      </div>
+      <br />
+      <h4>Shipping Address</h4>
+      <div style="display: flex;"><br />
+      <div style="padding: 5px; background-color: lightgrey;">%Order.ShippingAddress1%,%Order.ShippingAddress2%<br />%Order.ShippingStateProvince%, %Order.ShippingCity%,%Order.ShippingCountry%<br />%Order.ShippingZipPostalCode%<br />Phone:%Order.ShippingPhoneNumber%</div>
+      </div>
+      <h4>Shipping Method</h4>
+      <div style="width: auto; height: 75px; border: 3px; background-color: lightgrey;"><br />Shipping Method: %Order.ShippingMethod%</div>
+      <h4>Order Information</h4>
+      Shipping instruction: None <br />%Order.Product(s)% <br /><br /><strong>Payment Method: </strong>%Order.PaymentMethod%</div>
+      </div>
+  </body>
+</html>
