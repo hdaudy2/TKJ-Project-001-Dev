@@ -37,6 +37,7 @@ namespace Nop.Web.Areas.Admin.Controllers
         private readonly ITopicService _topicService;
         private readonly IUrlRecordService _urlRecordService;
         private readonly IGenericAttributeService _genericAttributeService;
+        private readonly IStoreContext _storeContext; //Multi-Tenant Plugin
         private readonly IWorkContext _workContext;
 
 
@@ -57,6 +58,7 @@ namespace Nop.Web.Areas.Admin.Controllers
             ITopicService topicService,
             IUrlRecordService urlRecordService,
             IGenericAttributeService genericAttributeService,
+            IStoreContext storeContext,
             IWorkContext workContext)
         {
             _aclService = aclService;
@@ -72,6 +74,7 @@ namespace Nop.Web.Areas.Admin.Controllers
             _topicService = topicService;
             _urlRecordService = urlRecordService;
             _genericAttributeService = genericAttributeService;
+            _storeContext = storeContext; //Multi-Tenant Plugin
             _workContext = workContext;
         }
 
@@ -209,6 +212,13 @@ namespace Nop.Web.Areas.Admin.Controllers
         {
             if (!await _permissionService.AuthorizeAsync(StandardPermissionProvider.ManageTopics))
                 return await AccessDeniedDataTablesJson();
+
+            #region Multi-Tenant Plugin
+            var currentStore = await _storeContext.GetCurrentStoreAsync();
+            var isAdmin = await _customerService.IsAdminAsync(await _workContext.GetCurrentCustomerAsync());
+
+            if(!isAdmin) searchModel.SearchStoreId = currentStore.Id;
+            #endregion
 
             //prepare model
             var model = await _topicModelFactory.PrepareTopicListModelAsync(searchModel);
