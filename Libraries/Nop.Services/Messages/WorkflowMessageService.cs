@@ -2293,7 +2293,8 @@ namespace Nop.Services.Messages
             var commonTokens = new List<Token>
             {
                 new Token("ContactUs.SenderEmail", senderEmail),
-                new Token("ContactUs.SenderName", senderName)
+                new Token("ContactUs.SenderName", senderName),
+                new Token("ContactUs.Body", body, true)
             };
 
             return await SendNotificationForStoreAdminsAsync(languageId, store, commonTokens, messageTemplates);
