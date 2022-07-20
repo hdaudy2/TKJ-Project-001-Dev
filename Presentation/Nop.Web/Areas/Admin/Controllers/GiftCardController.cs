@@ -211,7 +211,7 @@ namespace Nop.Web.Areas.Admin.Controllers
             model.PurchasedWithOrderNumber = order?.CustomOrderNumber;
             
             //  Multi-Tenant Plugin
-            int LimitedToStore = model.LimitedToStore;
+            int LimitedToStore = giftCard.LimitedToStore;
             
             if (ModelState.IsValid)
             {
