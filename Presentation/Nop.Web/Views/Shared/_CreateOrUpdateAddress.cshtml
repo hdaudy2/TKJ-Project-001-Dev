@@ -135,7 +135,7 @@
     {
         <div class="inputs">
             <label asp-for="PhoneNumber" asp-postfix=":"></label>
-            <input asp-for="PhoneNumber" placeholder="000-000-0000" maxlength="12"/>
+            <input asp-for="PhoneNumber" class="phoneMasking" placeholder="000-000-0000" maxlength="12"/>
             @if (Model.PhoneRequired)
             {
                 <nop-required />
@@ -147,7 +147,7 @@
     {
         <div class="inputs">
             <label asp-for="FaxNumber" asp-postfix=":"></label>
-            <input asp-for="FaxNumber" placeholder="000-000-0000" maxlength="12"/>
+            <input asp-for="FaxNumber" class="faxMasking" placeholder="000-000-0000" maxlength="12"/>
             @if (Model.FaxRequired)
             {
                 <nop-required />
@@ -162,8 +162,8 @@
     @await Component.InvokeAsync("Widget", new { widgetZone = PublicWidgetZones.AddressBottom, additionalData = Model })
     
     <script>
-        const Phone = document.querySelector("#Address_PhoneNumber");
-        const Fax = document.querySelector("#Address_FaxNumber");
+        const Phone = document.querySelector(".phoneMasking");
+        const Fax = document.querySelector(".faxMasking");
     </script>
      <script>
         const masking = (element) => {
