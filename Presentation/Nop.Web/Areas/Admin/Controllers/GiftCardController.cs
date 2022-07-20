@@ -209,12 +209,16 @@ namespace Nop.Web.Areas.Admin.Controllers
             model.CreatedOn = await _dateTimeHelper.ConvertToUserTimeAsync(giftCard.CreatedOnUtc, DateTimeKind.Utc);
             model.PrimaryStoreCurrencyCode = (await _currencyService.GetCurrencyByIdAsync(_currencySettings.PrimaryStoreCurrencyId)).CurrencyCode;
             model.PurchasedWithOrderNumber = order?.CustomOrderNumber;
-
+            
+            //  Multi-Tenant Plugin
+            int LimitedToStore = model.LimitedToStore;
+            
             if (ModelState.IsValid)
             {
                 giftCard = model.ToEntity(giftCard);
+                giftCard.LimitedToStore = LimitedToStore; //  Multi-Tenant Plugin
                 await _giftCardService.UpdateGiftCardAsync(giftCard);
-
+            
                 //activity log
                 await _customerActivityService.InsertActivityAsync("EditGiftCard",
                     string.Format(await _localizationService.GetResourceAsync("ActivityLog.EditGiftCard"), giftCard.GiftCardCouponCode), giftCard);

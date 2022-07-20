@@ -198,11 +198,15 @@ namespace Nop.Web.Areas.Admin.Controllers
             var discount = await _discountService.GetDiscountByIdAsync(model.Id);
             if (discount == null)
                 return RedirectToAction("List");
-
+            
+            //  Multi-Tenant Plugin
+            int LimitedToStore = discount.LimitedToStore;
+            
             if (ModelState.IsValid)
             {
                 var prevDiscountType = discount.DiscountType;
                 discount = model.ToEntity(discount);
+                discount.LimitedToStore = LimitedToStore; //  Multi-Tenant Plugin
                 await _discountService.UpdateDiscountAsync(discount);
 
                 //clean up old references (if changed) 
